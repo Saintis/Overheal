@@ -4,28 +4,9 @@ Python script for parsing a log and calculating overheals amounts and counts.
 By: Filip Gokstorp (Saintis), 2020
 """
 import numpy as np
-import re
 
+import process_raw_logs as raw
 from spell_data import SPELL_COEFFICIENTS, SPELL_NAMES
-
-def process_line(line):
-    """
-    Process a matched line.
-
-    Splits by ,
-
-    Extracts spell id and name, as well as total heal and overheal values
-    """
-    parts = line.split(",")
-
-    spell_id = parts[9]
-    spell_name = parts[10]
-
-    total_heal = parts[29]
-    overheal = parts[30]
-    is_crit = parts[32]
-
-    return (spell_id, spell_name, total_heal, overheal, is_crit)
 
 
 def group_processed_lines(processed_lines, ignore_crit, spell_id=None):
@@ -87,7 +68,12 @@ def aggregate_lines(grouped_lines, spell_power=0):
         data = np.zeros(6)
         data[0] = len(spell_data)
 
-        coefficient = SPELL_COEFFICIENTS[id]
+        # Fail more gracefully if we are missing a coefficient
+        if id in SPELL_COEFFICIENTS:
+            coefficient = SPELL_COEFFICIENTS[id]
+        else:
+            print(f"Unknown coefficient for spell id {id}!")
+            coefficient = 0
 
         for h, oh in spell_data:
             dh = coefficient * spell_power
@@ -132,33 +118,8 @@ def display_lines(names, total_data, data_list, group):
     print_spell_aggregate(group_name, total_data)
 
 
-def get_lines(player_name, log_file):
-    """Get the lines"""
-    fh = open(log_file)
-    log = fh.readlines()
-
-    # Match logs for spell heal values
-    # Does not include periodic heals such as Renew
-    # Those are listed under SPELL_PERIODIC_HEAL
-    heal_match = f'SPELL_HEAL,[^,]*,"{player_name}-'
-    periodic_heal_match = f'SPELL_PERIODIC_HEAL,[^,]*,"{player_name}-'
-
-    # Filtered and processed lines
-    heal_lines = []
-    periodic_lines = []
-    for line in log:
-        if re.search(heal_match, line):
-            p_line = process_line(line)
-            heal_lines.append(p_line)
-        elif re.search(periodic_heal_match, line):
-            p_line = process_line(line)
-            periodic_lines.append(p_line)
-
-    return heal_lines, periodic_lines
-
-
 def process_log(player_name, log_file, ignore_crit=False, **kwargs):
-    heal_lines, periodic_lines = get_lines(player_name, log_file)
+    heal_lines, periodic_lines = raw.get_lines(player_name, log_file)
 
     # Group lines
     names, heal_lines = group_processed_lines(heal_lines, ignore_crit)

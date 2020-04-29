@@ -8,14 +8,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 from textwrap import wrap
 
-import overheal_table as olp
+import overheal_table as ot
+import process_raw_logs as raw
 
 
 def process_log(player_name, log_file, ignore_crit=False, spell_id=None, **kwargs):
-    heal_lines, periodic_lines = olp.get_lines(player_name, log_file)
+    heal_lines, periodic_lines = raw.get_lines(player_name, log_file)
 
     # Group lines
-    names, heal_lines = olp.group_processed_lines(heal_lines, ignore_crit, spell_id=spell_id)
+    names, heal_lines = ot.group_processed_lines(heal_lines, ignore_crit, spell_id=spell_id)
 
     spell_powers = np.arange(0, 500 + 1, 5)
     total_heals = []
@@ -23,7 +24,7 @@ def process_log(player_name, log_file, ignore_crit=False, spell_id=None, **kwarg
     total_actual_heals = []
 
     for sp in spell_powers:
-        total_data, _ = olp.aggregate_lines(heal_lines, spell_power=sp)
+        total_data, _ = ot.aggregate_lines(heal_lines, spell_power=sp)
 
         n_heals = total_data[0]
         heal = total_data[4]
