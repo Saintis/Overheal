@@ -10,11 +10,11 @@ The two scripts look at the same data and process it similarly.
 # Usage
 Requires `python3`, `numpy`, and `matplotlib`.
 
-You will have to create a `figs` directory for the script to save the figures into.
-
 Run either scripts with:
 ```
 overheal_plot.py [player_name] [log_file]
 ```
 
 Run `overheal_plot.py -h` for more options.
+
+Figures from the script will be saved in a `figs` directory.

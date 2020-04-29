@@ -3,6 +3,7 @@ Script that generates plot of the overheals.
 
 By: Filip Gokstorp (Saintis), 2020
 """
+import os
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -14,6 +15,8 @@ import process_raw_logs as raw
 
 def process_log(player_name, log_file, ignore_crit=False, spell_id=None, **kwargs):
     heal_lines, periodic_lines = raw.get_lines(player_name, log_file)
+
+    os.makedirs("figs", exist_ok=True)
 
     # Group lines
     names, heal_lines = ot.group_processed_lines(heal_lines, ignore_crit, spell_id=spell_id)
