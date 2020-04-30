@@ -1,5 +1,6 @@
 """Functions for processing raw combatlogs."""
 import re
+import os
 
 def process_line(line):
     """
@@ -23,7 +24,13 @@ def process_line(line):
 
 def get_lines(player_name, log_file):
     """Get the lines"""
-    fh = open(log_file)
+    try:
+        fh = open(log_file)
+    except FileNotFoundError:
+        print(f"Could not find `{log_file}`!")
+        print(f"Looking in `{os.getcwd()}`, please double check your log file is there.")
+        exit(1)
+
     log = fh.readlines()
 
     # Match logs for spell heal values
