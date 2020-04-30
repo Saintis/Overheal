@@ -22,7 +22,9 @@ def group_processed_lines(processed_lines, ignore_crit, spell_id=None):
     filter_spell_id = spell_id
 
     for spell_id, spell_name, total_heal, overheal, is_crit in processed_lines:
-        if ignore_crit and is_crit == "1\n":
+        is_crit = True if is_crit == "1\n" else False
+
+        if ignore_crit and is_crit:
             continue
 
         if filter_spell_id and spell_id != filter_spell_id:
@@ -34,21 +36,22 @@ def group_processed_lines(processed_lines, ignore_crit, spell_id=None):
                 stripped_name = SPELL_NAMES[spell_id]
             else:
                 stripped_name = spell_name.strip('"')
+                stripped_name += f" [{spell_id}]"
             name_dict[spell_id] = stripped_name
             id_dict[spell_id] = []
 
-        id_dict[spell_id].append((int(total_heal), int(overheal)))
+        id_dict[spell_id].append((int(total_heal), int(overheal), is_crit))
 
     return name_dict, id_dict
 
 
-def print_spell_aggregate(name, data):
+def print_spell_aggregate(id, name, data):
     """Prints aggregate information for single spell."""
     heals, any_overheals, half_overheals, full_overheals, amount_healed, amount_overhealed = data
     under_heals = heals - any_overheals
 
     print(
-        f"{name:28s}  {heals:3.0f}"
+        f"{id:>5s}  {name:28s}  {heals:3.0f}"
         f"  {under_heals / heals:7.1%}"
         f"  {any_overheals / heals:7.1%}"
         f"  {half_overheals / heals:7.1%}"
@@ -57,7 +60,7 @@ def print_spell_aggregate(name, data):
     )
 
 
-def aggregate_lines(grouped_lines, spell_power=0):
+def aggregate_lines(grouped_lines, spell_power=0.0):
     """Aggregates and evaluates grouped lines"""
     # heals, any OH, half OH, full OH, aH, aOH
     total_data = np.zeros(6)
@@ -75,22 +78,36 @@ def aggregate_lines(grouped_lines, spell_power=0):
             print(f"Unknown coefficient for spell id {id}!")
             coefficient = 0
 
-        for h, oh in spell_data:
+        for h, oh, crit in spell_data:
             dh = coefficient * spell_power
+
+            if crit:
+                # scale spell power differential by 1.5 if spell was a crit
+                dh *= 1.5
+
             h = h - dh
             oh = oh - dh
+
+            if h < 0.0:
+                # could happen for heals on healing reduced players, we just ignore these for now
+                continue
 
             if oh < 0.0:
                 oh = 0.0
 
-            if oh >= 0.9 * h:
+            # if crit:
+            #     print(f"* h: {h:.1f}  oh: {oh:.1f} *")
+            # else:
+            #     print(f"  h: {h:.1f}  oh: {oh:.1f}")
+
+            if oh == h:
                 data[3] += 1
                 data[2] += 1
                 data[1] += 1
             elif oh >= 0.5 * h:
                 data[2] += 1
                 data[1] += 1
-            elif oh > 0:
+            elif oh > 0.0:
                 data[1] += 1
 
             data[4] += h
@@ -104,18 +121,18 @@ def aggregate_lines(grouped_lines, spell_power=0):
 
 def display_lines(names, total_data, data_list, group):
     """Print data lines for cli display"""
-    print(f"{group + ' name':28s}  {'#H':>3s}  {'No OH':>7s}  {'Any OH':>7s}  {'Half OH':>7s}  {'Full OH':>7s}  {'% OHd':>7s}")
+    print(f"{'id':>5s}  {group + ' name':28s}  {'#H':>3s}  {'No OH':>7s}  {'Any OH':>7s}  {'Half OH':>7s}  {'Full OH':>7s}  {'% OHd':>7s}")
 
     for id, data in data_list:
-        print_spell_aggregate(names[id], data)
+        print_spell_aggregate(id, names[id], data)
 
-    print("-" * (28 + 2 + 3 + 2 + 7 + 2 + 7 + 2 + 7 + 2 + 7 + 2 + 7))
+    print("-" * (5 + 2 + 28 + 2 + 3 + 2 + 7 + 2 + 7 + 2 + 7 + 2 + 7 + 2 + 7))
 
     group_name = "Total"
     if group:
         group_name += " " + group
 
-    print_spell_aggregate(group_name, total_data)
+    print_spell_aggregate("", group_name, total_data)
 
 
 def process_log(player_name, log_file, ignore_crit=False, **kwargs):
