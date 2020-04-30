@@ -34,10 +34,12 @@ SPELL_NAMES = {
     "27823": "Holy Nova (Rank 6)",
 
     "10929": "Renew (Rank 9)",
+    "6077": "Renew (Rank 5)",
 }
 
 # Spell coefficients of each spell id, for determining weight of heal power
 SPELL_COEFFICIENTS = {
+    # Flash Heal
     "10917": 0.429,
     "10916": 0.429,
     "10915": 0.429,
@@ -46,28 +48,36 @@ SPELL_COEFFICIENTS = {
     "9472": 0.429,
     "2061": 0.429,
 
+    # Lesser Heal
     "2053": 0.446,
 
+    # Prayer of Healing
     "25316": 0.286,
     "10961": 0.286,
     "10960": 0.286,
     "996": 0.286,
     "596": 0.286,
 
+    # Greater Heal
     "25314": 0.857,
     "10965": 0.857,
     "10964": 0.857,
     "10963": 0.857,
     "2060": 0.857,
 
+    # Heal
     "6064": 0.857,
     "6063": 0.857,
     "2055": 0.857,
     "2054": 0.729,
 
+    # Holy Nova
     "27801": 0.107,
     "27805": 0.107,
     "27823": 0.107,
 
+    # Renew
     "10929": 1.0 / 5,
+    "6077": 1.0 / 5,
+}
 }
