@@ -12,14 +12,16 @@ Requires `python3`, `numpy`, and `matplotlib`.
 
 Run either scripts with:
 ```
-overheal_plot.py [player_name] [log_file]
+python3 overheal_plot.py [player_name] [log_file]
 ```
 e.g.
 ```
-overheal_plot.py Saintis WoWCombatLog.txt
+python3 overheal_plot.py Saintis WoWCombatLog.txt
 ```
 
-Run `overheal_plot.py -h` for more options.
+(if `python3` gives an error you can try `python`, otherwise look up how to run a python script on your machine)
+
+Run `python3 overheal_plot.py -h` for more options.
 
 Figures from the script will be saved in a `figs` directory.
 
@@ -29,7 +31,7 @@ To get a plot of just one spell use the `--spell_id` option
 
 E.g. (for Heal Rank 2)
 ```
-overheal_plot.py Saintis WoWCombatLog.txt --spell_id 2055
+python3 overheal_plot.py Saintis WoWCombatLog.txt --spell_id 2055
 ```
 
 Running `overheal_table.py` will list the spell id of each spell found.
