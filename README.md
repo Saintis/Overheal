@@ -14,6 +14,10 @@ Run either scripts with:
 ```
 overheal_plot.py [player_name] [log_file]
 ```
+e.g.
+```
+overheal_plot.py Saintis WoWCombatLog.txt
+```
 
 Run `overheal_plot.py -h` for more options.
 
