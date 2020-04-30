@@ -22,3 +22,14 @@ overheal_plot.py Saintis WoWCombatLog.txt
 Run `overheal_plot.py -h` for more options.
 
 Figures from the script will be saved in a `figs` directory.
+
+## Plot of single spell
+
+To get a plot of just one spell use the `--spell_id` option
+
+E.g. (for Heal Rank 2)
+```
+overheal_plot.py Saintis WoWCombatLog.txt --spell_id 2055
+```
+
+Running `overheal_table.py` will list the spell id of each spell found.
