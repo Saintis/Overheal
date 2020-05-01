@@ -82,7 +82,6 @@ SPELL_COEFFICIENTS = {
     "10929": 1.0 / 5,
     "6077": 1.0 / 5,
 }
-}
 
 # Raw healing of each spell
 SPELL_HEALS = {
