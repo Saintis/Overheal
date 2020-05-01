@@ -32,6 +32,7 @@ SPELL_NAMES = {
     "27801": "Holy Nova (Rank 6)",
     "27805": "Holy Nova (Rank 6)",
     "27823": "Holy Nova (Rank 6)",
+    "23455": "Holy Nova (Rank 1)",
 
     "10929": "Renew (Rank 9)",
     "6077": "Renew (Rank 5)",
@@ -75,9 +76,76 @@ SPELL_COEFFICIENTS = {
     "27801": 0.107,
     "27805": 0.107,
     "27823": 0.107,
+    "23455": 0.107,
 
     # Renew
     "10929": 1.0 / 5,
     "6077": 1.0 / 5,
 }
 }
+
+# Raw healing of each spell
+SPELL_HEALS = {
+    # Flash Heal
+    "10917": 901.5,
+    "10916": 722.5,
+    "10915": 583.5,
+    "9474": 453.0,
+    "9473": 372.5,
+    "9472": 297.0,
+    "2061": 224.5,
+
+    # Lesser Heal
+    "2053": 154.0,
+
+    # Prayer of Healing
+    # "25316": 0.0,
+    "10961": 965.0,
+    # "10960": 0.0,
+    # "996": 0.0,
+    # "596": 0.0,
+
+    # Greater Heal
+    "25314": 2080.0,
+    "10965": 1917.0,
+    "10964": 1556.0,
+    "10963": 1248.0,
+    "2060": 981.5,
+
+    # Heal
+    "6064": 780.5,
+    "6063": 624.0,
+    "2055": 476.0,
+    "2054": 330.0,
+
+    # Holy Nova
+    "27801": 326.0,
+    "27805": 326.0,
+    "27823": 326.0,
+    "23455": 58.5,
+
+    # Renew
+    "10929": 810 / 5,
+    "6077": 315 / 5,
+}
+
+def spell_name(spell_id):
+    if spell_id in SPELL_NAMES:
+        return SPELL_NAMES[spell_id]
+
+    print(f"Unknown name for spell {spell_id}")
+    return "Unknown"
+
+def spell_coefficient(spell_id):
+    if spell_id in SPELL_COEFFICIENTS:
+        return SPELL_COEFFICIENTS[spell_id]
+
+    print(f"Unknown coefficient for spell {spell_id}")
+    return 0.0
+
+def spell_heal(spell_id):
+    if spell_id in SPELL_HEALS:
+        return SPELL_HEALS[spell_id]
+
+    print(f"Unknown base heal for spell {spell_id}")
+    return 0.0
