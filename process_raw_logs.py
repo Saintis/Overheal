@@ -1,6 +1,7 @@
 """Functions for processing raw combatlogs."""
 import re
 import os
+import io
 
 def process_line(line):
     """
@@ -25,7 +26,7 @@ def process_line(line):
 def get_lines(player_name, log_file):
     """Get the lines"""
     try:
-        fh = open(log_file)
+        fh = io.open(log_file, encoding="utf-8")
     except FileNotFoundError:
         print(f"Could not find `{log_file}`!")
         print(f"Looking in `{os.getcwd()}`, please double check your log file is there.")
