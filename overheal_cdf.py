@@ -32,9 +32,12 @@ def process_spell(player_name, spell_id, spell_lines, spell_power=None, show=Tru
     plt.fill_between(cast_fraction, 1, relative_underheal, label="Overheal")
 
     # add base heal line if spell-power is included
-    if spell_power:
-        base_heal = sd.spell_heal(spell_id)
-        extra_heal = sd.spell_coefficient(spell_id) * spell_power
+
+    base_heal = sd.spell_heal(spell_id)
+    coeff = sd.spell_coefficient(spell_id)
+
+    if spell_power and base_heal > 0 and coeff > 0:
+        extra_heal = coeff * spell_power
         base_heal_fraction = base_heal / (base_heal + extra_heal)
 
         plt.axhline(base_heal_fraction, linestyle="--", color="k", label="Base heal")
