@@ -121,7 +121,7 @@ def process_log(player_name, log_file, spell_power=500, ignore_crit=False, spell
     ax2.grid()
     ax2.legend()
 
-    fig_name = "overheal"
+    fig_name = f"{player_name}_overheal"
     if spell_id:
         fig_name += "_" + spell_id
 

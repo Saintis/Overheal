@@ -46,7 +46,7 @@ def process_spell(spell_id, spell_lines, spell_power=None, show=True):
     plt.ylim((0, 1))
     plt.legend()
 
-    plt.savefig(f"figs/overheal_cdf_{spell_id}.png")
+    plt.savefig(f"figs/{player_name}_cdf_{spell_id}.png")
 
     # plt.figure(constrained_layout=True)
     # plt.fill_between(relative_underheal, 1 - cast_fraction, label="Underheal")
