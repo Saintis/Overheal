@@ -70,7 +70,7 @@ def process_log(player_name, log_file, spell_power=500, ignore_crit=False, spell
     plt.legend()
     plt.tight_layout()
 
-    plt.savefig("figs/total_heal.png")
+    plt.savefig(f"figs/{player_name}_total_heal.png")
 
     # number of heals figure
     fig = plt.figure(figsize=(10, 4), constrained_layout=True)

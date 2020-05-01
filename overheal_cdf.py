@@ -11,7 +11,7 @@ import spell_data as sd
 from overheal_table import group_processed_lines
 
 
-def process_spell(spell_id, spell_lines, spell_power=None, show=True):
+def process_spell(player_name, spell_id, spell_lines, spell_power=None, show=True):
     spell_name = sd.spell_name(spell_id)
 
     relative_underheal = []
@@ -80,12 +80,12 @@ def overheal_cdf(player_name, log_file, spell_id=None, **kwargs):
             print(f"Could not find casts of spell [{spell_id}]")
             exit(1)
 
-        process_spell(spell_id, lines, **kwargs)
+        process_spell(player_name, spell_id, lines, **kwargs)
     else:
         for spell_id, lines in heal_lines.items():
-            process_spell(spell_id, lines, show=False, **kwargs)
+            process_spell(player_name, spell_id, lines, show=False, **kwargs)
         for spell_id, lines in periodic_lines.items():
-            process_spell(spell_id, lines, show=False, **kwargs)
+            process_spell(player_name, spell_id, lines, show=False, **kwargs)
 
 
 if __name__ == "__main__":
