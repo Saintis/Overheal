@@ -1,7 +1,5 @@
-"""Script that estimates spell power"""
-
 """
-Python script for parsing a log and calculating overheals amounts and counts.
+Python script that estimates spell power from logs.
 
 By: Filip Gokstorp (Saintis), 2020
 """

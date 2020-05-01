@@ -1,7 +1,5 @@
-"""Script that estimates spell power"""
-
 """
-Python script for parsing a log and calculating overheals amounts and counts.
+Script that estimates spell cumulative distribution function of overheal chance.
 
 By: Filip Gokstorp (Saintis), 2020
 """
@@ -65,7 +63,7 @@ def process_spell(spell_id, spell_lines, spell_power=None, show=True):
         plt.show()
 
 
-def estimate_spell_power(player_name, log_file, spell_id=None, **kwargs):
+def overheal_cdf(player_name, log_file, spell_id=None, **kwargs):
     heal_lines, periodic_lines = raw.get_lines(player_name, log_file)
 
     # Group lines
@@ -107,4 +105,4 @@ Analyses logs and gives overheal cdf.
 
     args = parser.parse_args()
 
-    estimate_spell_power(args.player_name, args.log_file, spell_id=args.spell_id, spell_power=args.spell_power)
+    overheal_cdf(args.player_name, args.log_file, spell_id=args.spell_id, spell_power=args.spell_power)
