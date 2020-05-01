@@ -38,6 +38,7 @@ SPELL_NAMES = {
     "10929": "Renew (Rank 9)",
     "6077": "Renew (Rank 5)",
     "6075": "Renew (Rank 3)",
+    "139": "Renew (Rank 1)",
 
     "19243": "Desperate Prayer (Rank 7)",
 }
@@ -87,6 +88,7 @@ SPELL_COEFFICIENTS = {
     "10929": 1.0 / 5,
     "6077": 1.0 / 5,
     "6075": 1.0 / 5,
+    "139": 0.55 / 5,
 
     # Desperate Prayer
     "19243": 0.429,
@@ -137,6 +139,7 @@ SPELL_HEALS = {
     "10929": 810 / 5,
     "6077": 315 / 5,
     "6075": 175 / 5,
+    "139": 45 / 5,
 
     # Desperate Prayer
     "19243": 1459.5,
