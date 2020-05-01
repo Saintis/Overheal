@@ -36,6 +36,8 @@ SPELL_NAMES = {
 
     "10929": "Renew (Rank 9)",
     "6077": "Renew (Rank 5)",
+
+    "19243": "Desperate Prayer (Rank 7)",
 }
 
 # Spell coefficients of each spell id, for determining weight of heal power
@@ -81,6 +83,9 @@ SPELL_COEFFICIENTS = {
     # Renew
     "10929": 1.0 / 5,
     "6077": 1.0 / 5,
+
+    # Desperate Prayer
+    "19243": 0.429,
 }
 
 # Raw healing of each spell
@@ -126,6 +131,9 @@ SPELL_HEALS = {
     # Renew
     "10929": 810 / 5,
     "6077": 315 / 5,
+
+    # Desperate Prayer
+    "19243": 1459.5,
 }
 
 def spell_name(spell_id):
