@@ -14,10 +14,22 @@ import process_raw_logs as raw
 import spell_data as sd
 
 
-def spell_overheal_probability(player_name, spell_id, lines, spell_power):
+def spell_overheal_probability(player_name, spell_id, lines, spell_power=None):
     """Plots overheal probability of each spell"""
 
-    spell_powers = np.linspace(0, -spell_power, (spell_power // 1) + 1)
+    if spell_power is None:
+        sp_neg = 400.0
+        sp_shift = 0.0
+        sp_extrap = 200.0
+    else:
+        sp_neg = spell_power
+        sp_shift = spell_power
+        sp_extrap = 1000.0 - spell_power
+
+        if sp_extrap < 0:
+            sp_extrap = 1500.0 - spell_power
+
+    spell_powers = np.linspace(0, -sp_neg, int(sp_neg / 1) + 1)
     oh_probabilities = []
     oh_p_no_crit = []
 
@@ -68,17 +80,17 @@ def spell_overheal_probability(player_name, spell_id, lines, spell_power):
 
     # extrapolate from first 1/2 of data (0 - spell_power / 2)
     ii = len(spell_powers) // 2
-    e_sp = np.linspace(spell_powers[ii], -spell_powers[ii], 101)
+    e_sp = np.linspace(spell_powers[ii], sp_extrap, 101)
 
     plt.figure(constrained_layout=True)
 
     p = np.polyfit(spell_powers[:ii], oh_probabilities[:ii], 1)
-    plt.plot(e_sp, np.polyval(p, e_sp), "b--", label="Extrapolation")
-    plt.plot(spell_powers, oh_probabilities, label=f"All heals (N={n_samples})")
+    plt.plot(e_sp + sp_shift, np.polyval(p, e_sp), "b--", label="Extrapolation")
+    plt.plot(spell_powers + sp_shift, oh_probabilities, label=f"All heals (N={n_samples})")
 
     p = np.polyfit(spell_powers[:ii], oh_p_no_crit[:ii], 1)
-    plt.plot(e_sp, np.polyval(p, e_sp), "r--", label="Extrapolation, no crits")
-    plt.plot(spell_powers, oh_p_no_crit, label=f"No crits (N={n_samples_no_crit})")
+    plt.plot(e_sp + sp_shift, np.polyval(p, e_sp), "r--", label="Extrapolation, no crits")
+    plt.plot(spell_powers + sp_shift, oh_p_no_crit, label=f"No crits (N={n_samples_no_crit})")
 
     plt.title(f"Overheal probability of {sd.spell_name(spell_id)}")
     plt.ylabel("Overheal probability")
@@ -117,8 +129,8 @@ if __name__ == "__main__":
     parser.add_argument("log_file", help="Path to the log file to analyse")
     parser.add_argument("--ignore_crit", action="store_true", help="Remove critical heals from analysis")
     parser.add_argument("--spell_id", type = str, help = "Spell id to print figure for. If None, prints for all found spells")
-    parser.add_argument("-p", "--spell_power", type=int, help="Spell power range to look at", default=400)
+    parser.add_argument("-p", "--spell_power", type=int, help="Character spell power. If None, only look at spell power change relative to current amount", default=None)
 
     args = parser.parse_args()
 
-    process_log(args.player_name, args.log_file, args.spell_power, ignore_crit=args.ignore_crit, spell_id=args.spell_id)
+    process_log(args.player_name, args.log_file, spell_power=args.spell_power, ignore_crit=args.ignore_crit, spell_id=args.spell_id)
