@@ -1,15 +1,23 @@
-"""Functions for processing raw combatlogs."""
+"""
+Functions for processing raw combat logs from WoW Classic.
+
+By: Filip Gokstorp (Saintis-Dreadmist), 2020
+"""
 import re
 import os
 import io
+
 
 def process_line(line):
     """
     Process a matched line.
 
-    Splits by ,
+    Splits each line by ,
 
     Extracts spell id and name, as well as total heal and overheal values
+
+    :param line: the line (string) to split into useful data
+    :returns (spell id, spell name, heal, overheal, crit status)
     """
     parts = line.split(",")
 
@@ -24,7 +32,14 @@ def process_line(line):
 
 
 def get_lines(player_name, log_file):
-    """Get the lines"""
+    """
+    Get the lines spell heal lines from specified log file for specified player.
+
+    :param player_name: The player / character to find lines for.
+    :param log_file: path to the file to load in.
+
+    :returns a list of SPELL_HEAL lines and SPELL_PERIODIC_HEAL lines.
+    """
     try:
         fh = io.open(log_file, encoding="utf-8")
     except FileNotFoundError:
