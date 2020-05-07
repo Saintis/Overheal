@@ -47,22 +47,91 @@ SPELL_NAMES = {
     "10901": "Power Word: Shield (Rank 10)",
 
     # Other misc spells
-    "552": "Abolish Disease",
-    "988": "Dispel Magic (Rank 2)",
-    "10890": "Psychic Scream (Rank 4)",
     "10942": "Fade (Rank 6)",
+    "10890": "Psychic Scream (Rank 4)",
+
+    # Damage spells
     "10947": "Mind Blast (Rank 9)",
+    "10934": "Smite (Rank 8)",
+
+    # Utility spells
+    # Priest
+    "27681": "Prayer of Spirit (Rank 1)",
+    "21564": "Prayer of Fortitude (Rank 2)",
+
+    "27841": "Divine Spirit (Rank 4)",
     "10958": "Shadow Protection (Rank 3)",
+    "10938": "Power Word: Fortitude (Rank 6)",
+
+    "20770": "Resurrection (Rank 5)",
+    "10881": "Resurrection (Rank 4)",
+
+    "988": "Dispel Magic (Rank 2)",
+    "552": "Abolish Disease",
+
+    # Mage
+    "23028": "Arcane Brilliance (Rank 1)",
+    "10157": "Arcane Intellect (Rank 5)",
+
+    "475": "Remove Lesser Curse",
+
+    # Druid
+    "21850": "Gift of the Wild (Rank 2)",
+    "9885": "Mark of the Wild (Rank 7)",
+
+    "20748": "Rebirth (Rank 5)",
+
+    "8946": "Cure Poison",
+    "2893": "Abolish Poison",
+    "2782": "Remove Curse",
+
+    # Shaman
+    "20777": "Ancestral Spirit (Rank 5)",
+
+    "2870": "Cure Disease",
+    "526": "Cure Poison",
+
+    # Paladin
+    "20773": "Redemption (Rank 5)",
+
+    # Hunter
+    "19801": "Tranquilizing Shot",
+
+    # Gnome
+    "20589": "Escape Artist",
+
+    # Mobs
+    "23859": "Dispel Magic",  # ZG bosses
+    "17201": "Dispel Magic",  # ZG mobs
+    "19492": "Antimagic Pulse",  # Garr
 }
 
 # Spells that might turn up but we don't care for listing in spell casts
 # These do not cost mana so will not trigger 5sr, or BD (presumably)
 SPELL_IGNORE = [
-    "5019",  # Shoot
-    "14751",  # Inner Focus
-    "16666",  # Demonic Rune
-    "17291",  # Stratholme Holy Water
     "17531",  # Major Mana Potion
+    "17291",  # Stratholme Holy Water
+    "16666",  # Demonic Rune
+    "14751",  # Inner Focus
+    "7744",  # Will of the Forsaken
+    "5019",  # Shoot
+]
+
+SPELL_BUFFS = [
+    # Priest
+    "21564",  # Prayer of Fortitude R2
+    "27681",  # Prayer of Spirit R1
+    "10938",  # Power Word: Fortitude R6
+    "27841",  # Divine Spirit R4
+    "10958",  # Shadow Protection R3
+
+    # Mage
+    "23028",  # Arcane Brilliance R1
+    "10157",  # Arcane Intellect R5
+
+    # Druid
+    "21850",  # Gift of the Wild R2
+    "9885",  # Mark of the Wild R7
 ]
 
 # Spell coefficients of each spell id, for determining weight of heal power
