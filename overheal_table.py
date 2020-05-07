@@ -121,6 +121,9 @@ def aggregate_lines(grouped_lines, spell_power=0.0):
 
 def display_lines(names, total_data, data_list, group):
     """Print data lines for cli display"""
+    if len(data_list) == 0:
+        return
+
     print(f"{'id':>5s}  {group + ' name':28s}  {'#H':>3s}  {'No OH':>7s}  {'Any OH':>7s}  {'Half OH':>7s}  {'Full OH':>7s}  {'% OHd':>7s}")
 
     for id, data in data_list:
@@ -136,7 +139,8 @@ def display_lines(names, total_data, data_list, group):
 
 
 def process_log(player_name, log_file, ignore_crit=False, **kwargs):
-    heal_lines, periodic_lines = raw.get_lines(player_name, log_file)
+    log_lines = raw.get_lines(log_file)
+    heal_lines, periodic_lines = raw.get_heals(player_name, log_lines)
 
     # Group lines
     names, heal_lines = group_processed_lines(heal_lines, ignore_crit)

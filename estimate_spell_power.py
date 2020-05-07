@@ -67,7 +67,8 @@ def process_spell(spell_id, spell_lines, heal_increase=0.0):
 
 
 def estimate_spell_power(player_name, log_file, spell_id=None, spiritual_healing=0, improved_renew=0, **kwargs):
-    heal_lines, periodic_lines = raw.get_lines(player_name, log_file)
+    log_lines = raw.get_lines(log_file)
+    heal_lines, periodic_lines = raw.get_heals(player_name, log_lines)
 
     # Group lines
     _, heal_lines = group_processed_lines(heal_lines, False, spell_id=spell_id)

@@ -15,7 +15,8 @@ from spell_data import SPELL_NAMES
 
 
 def process_log(player_name, log_file, spell_power=500, ignore_crit=False, spell_id=None, **kwargs):
-    heal_lines, periodic_lines = raw.get_lines(player_name, log_file)
+    log_lines = raw.get_lines(log_file)
+    heal_lines, periodic_lines = raw.get_heals(player_name, log_lines)
 
     os.makedirs("figs", exist_ok=True)
 

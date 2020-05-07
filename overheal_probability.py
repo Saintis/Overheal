@@ -106,7 +106,8 @@ def spell_overheal_probability(player_name, spell_id, lines, spell_power=None):
 
 
 def process_log(player_name, log_file, spell_power=500, ignore_crit=False, spell_id=None, **kwargs):
-    heal_lines, _ = raw.get_lines(player_name, log_file)
+    log_lines = raw.get_lines(log_file)
+    heal_lines, _ = raw.get_heals(player_name, log_lines)
 
     os.makedirs("figs", exist_ok=True)
 

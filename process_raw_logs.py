@@ -31,14 +31,11 @@ def process_line(line):
     return (spell_id, spell_name, total_heal, overheal, is_crit)
 
 
-def get_lines(player_name, log_file):
+def get_lines(log_file):
     """
-    Get the lines spell heal lines from specified log file for specified player.
+    Load in lines from WoW Classic combat log.
 
-    :param player_name: The player / character to find lines for.
-    :param log_file: path to the file to load in.
-
-    :returns a list of SPELL_HEAL lines and SPELL_PERIODIC_HEAL lines.
+    :param log_file: path to the log file
     """
     try:
         fh = io.open(log_file, encoding="utf-8")
@@ -47,18 +44,20 @@ def get_lines(player_name, log_file):
         print(f"Looking in `{os.getcwd()}`, please double check your log file is there.")
         exit(1)
 
-    log = fh.readlines()
+    return fh.readlines()
 
+
+def get_heals(character_name, log_lines):
     # Match logs for spell heal values
     # Does not include periodic heals such as Renew
     # Those are listed under SPELL_PERIODIC_HEAL
-    heal_match = f'SPELL_HEAL,[^,]*,"{player_name}-'
-    periodic_heal_match = f'SPELL_PERIODIC_HEAL,[^,]*,"{player_name}-'
+    heal_match = f'SPELL_HEAL,[^,]*,"{character_name}-'
+    periodic_heal_match = f'SPELL_PERIODIC_HEAL,[^,]*,"{character_name}-'
 
     # Filtered and processed lines
     heal_lines = []
     periodic_lines = []
-    for line in log:
+    for line in log_lines:
         if re.search(heal_match, line):
             p_line = process_line(line)
             heal_lines.append(p_line)

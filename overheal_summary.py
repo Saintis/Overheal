@@ -46,7 +46,8 @@ def process_spell(spell_id, spell_lines, spell_power):
 
 
 def overheal_cdf(player_name, log_file, spell_power, **kwargs):
-    heal_lines, periodic_lines = raw.get_lines(player_name, log_file)
+    log_lines = raw.get_lines(log_file)
+    heal_lines, periodic_lines = raw.get_heals(player_name, log_lines)
 
     # Group lines
     _, heal_lines = group_processed_lines(heal_lines, False)
