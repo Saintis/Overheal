@@ -15,7 +15,15 @@ import spell_data as sd
 
 
 def plot_oh_prob(
-    player_name, spell_id, spell_powers, sp_extrap, sp_shift, n_heals, n_overheals, n_heals_nc, n_overheals_nc
+    player_name,
+    spell_id,
+    spell_powers,
+    sp_extrap,
+    sp_shift,
+    n_heals,
+    n_overheals,
+    n_heals_nc,
+    n_overheals_nc,
 ):
     # Ensure target directory exists
     os.makedirs("figs/probability", exist_ok=True)
@@ -37,7 +45,9 @@ def plot_oh_prob(
     plt.plot(spell_powers + sp_shift, oh_p, label=f"All heals (N={ns})")
 
     p = np.polyfit(spell_powers[:ii], oh_p_nc[:ii], 1)
-    plt.plot(e_sp + sp_shift, np.polyval(p, e_sp), "r--", label="Extrapolation, no crits")
+    plt.plot(
+        e_sp + sp_shift, np.polyval(p, e_sp), "r--", label="Extrapolation, no crits"
+    )
     plt.plot(spell_powers + sp_shift, oh_p_nc, label=f"No crits (N={ns_nc})")
 
     plt.title(f"Overheal probability of {sd.spell_name(spell_id)}")
@@ -146,7 +156,9 @@ def spell_overheal_probability(player_name, spell_id, lines, spell_power=None):
     )
 
 
-def process_log(player_name, log_file, spell_power=500, ignore_crit=False, spell_id=None, **kwargs):
+def process_log(
+    player_name, log_file, spell_power=500, ignore_crit=False, spell_id=None, **kwargs
+):
     log_lines = raw.get_lines(log_file)
     heal_lines, _ = raw.get_heals(player_name, log_lines)
 
@@ -156,7 +168,6 @@ def process_log(player_name, log_file, spell_power=500, ignore_crit=False, spell
     _, heal_lines = ot.group_processed_lines(heal_lines, ignore_crit, spell_id=spell_id)
     for spell_id, lines in heal_lines.items():
         spell_overheal_probability(player_name, spell_id, lines, spell_power)
-
 
 
 if __name__ == "__main__":
@@ -169,10 +180,28 @@ if __name__ == "__main__":
 
     parser.add_argument("player_name", help="Player name to analyse overheal for")
     parser.add_argument("log_file", help="Path to the log file to analyse")
-    parser.add_argument("--ignore_crit", action="store_true", help="Remove critical heals from analysis")
-    parser.add_argument("--spell_id", type = str, help = "Spell id to print figure for. If None, prints for all found spells")
-    parser.add_argument("-p", "--spell_power", type=int, help="Character spell power. If None, only look at spell power change relative to current amount", default=None)
+    parser.add_argument(
+        "--ignore_crit", action="store_true", help="Remove critical heals from analysis"
+    )
+    parser.add_argument(
+        "--spell_id",
+        type=str,
+        help="Spell id to print figure for. If None, prints for all found spells",
+    )
+    parser.add_argument(
+        "-p",
+        "--spell_power",
+        type=int,
+        help="Character spell power. If None, only look at spell power change relative to current amount",
+        default=None,
+    )
 
     args = parser.parse_args()
 
-    process_log(args.player_name, args.log_file, spell_power=args.spell_power, ignore_crit=args.ignore_crit, spell_id=args.spell_id)
+    process_log(
+        args.player_name,
+        args.log_file,
+        spell_power=args.spell_power,
+        ignore_crit=args.ignore_crit,
+        spell_id=args.spell_id,
+    )

@@ -14,14 +14,18 @@ import process_raw_logs as raw
 from spell_data import SPELL_NAMES
 
 
-def process_log(player_name, log_file, spell_power=500, ignore_crit=False, spell_id=None, **kwargs):
+def process_log(
+    player_name, log_file, spell_power=500, ignore_crit=False, spell_id=None, **kwargs
+):
     log_lines = raw.get_lines(log_file)
     heal_lines, periodic_lines = raw.get_heals(player_name, log_lines)
 
     os.makedirs("figs", exist_ok=True)
 
     # Group lines
-    names, heal_lines = ot.group_processed_lines(heal_lines, ignore_crit, spell_id=spell_id)
+    names, heal_lines = ot.group_processed_lines(
+        heal_lines, ignore_crit, spell_id=spell_id
+    )
 
     spell_powers = np.linspace(0, spell_power, 101)
     sp = max(spell_powers) - spell_powers
@@ -150,10 +154,24 @@ Header explaination:
 
     parser.add_argument("player_name", help="Player name to analyse overheal for")
     parser.add_argument("log_file", help="Path to the log file to analyse")
-    parser.add_argument("--ignore_crit", action="store_true", help="Remove critical heals from analysis")
-    parser.add_argument("--spell_id", type = str, help = "Spell id to filter for")
-    parser.add_argument("-p", "--spell_power", type=int, help="Spell power range to look at", default=500)
+    parser.add_argument(
+        "--ignore_crit", action="store_true", help="Remove critical heals from analysis"
+    )
+    parser.add_argument("--spell_id", type=str, help="Spell id to filter for")
+    parser.add_argument(
+        "-p",
+        "--spell_power",
+        type=int,
+        help="Spell power range to look at",
+        default=500,
+    )
 
     args = parser.parse_args()
 
-    process_log(args.player_name, args.log_file, args.spell_power, ignore_crit=args.ignore_crit, spell_id=args.spell_id)
+    process_log(
+        args.player_name,
+        args.log_file,
+        args.spell_power,
+        ignore_crit=args.ignore_crit,
+        spell_id=args.spell_id,
+    )

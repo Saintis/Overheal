@@ -47,7 +47,9 @@ def group_processed_lines(processed_lines, ignore_crit, spell_id=None):
 
 def print_spell_aggregate(id, name, data):
     """Prints aggregate information for single spell."""
-    heals, any_overheals, half_overheals, full_overheals, amount_healed, amount_overhealed = data
+    heals, any_overheals, half_overheals, full_overheals, amount_healed, amount_overhealed = (
+        data
+    )
     under_heals = heals - any_overheals
 
     print(
@@ -124,7 +126,9 @@ def display_lines(names, total_data, data_list, group):
     if len(data_list) == 0:
         return
 
-    print(f"{'id':>5s}  {group + ' name':28s}  {'#H':>3s}  {'No OH':>7s}  {'Any OH':>7s}  {'Half OH':>7s}  {'Full OH':>7s}  {'% OHd':>7s}")
+    print(
+        f"{'id':>5s}  {group + ' name':28s}  {'#H':>3s}  {'No OH':>7s}  {'Any OH':>7s}  {'Half OH':>7s}  {'Full OH':>7s}  {'% OHd':>7s}"
+    )
 
     for id, data in data_list:
         print_spell_aggregate(id, names[id], data)
@@ -173,7 +177,9 @@ Header explaination:
 
     parser.add_argument("player_name", help="Player name to analyse overheal for")
     parser.add_argument("log_file", help="Path to the log file to analyse")
-    parser.add_argument("--ignore_crit", action="store_true", help="Remove critical heals from analysis")
+    parser.add_argument(
+        "--ignore_crit", action="store_true", help="Remove critical heals from analysis"
+    )
 
     args = parser.parse_args()
 

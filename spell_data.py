@@ -1,5 +1,7 @@
 """Collection of spell names and coefficients to match spell ids."""
 
+# fmt: off
+
 # Spell id to spell names, including rank
 SPELL_NAMES = {
     "10917": "Flash Heal (Rank 7)",
@@ -165,12 +167,16 @@ SPELL_HEALS = {
     "19243": 1459.5,
 }
 
+# fmt: on
+
+
 def spell_name(spell_id):
     if spell_id in SPELL_NAMES:
         return SPELL_NAMES[spell_id]
 
     print(f"Unknown name for spell {spell_id}")
-    return "Unknown"
+    return f"[Spell {spell_id}]"
+
 
 def spell_coefficient(spell_id):
     if spell_id in SPELL_COEFFICIENTS:
@@ -178,6 +184,7 @@ def spell_coefficient(spell_id):
 
     print(f"Unknown coefficient for spell {spell_id}")
     return 0.0
+
 
 def spell_heal(spell_id):
     if spell_id in SPELL_HEALS:

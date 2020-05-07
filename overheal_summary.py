@@ -44,7 +44,6 @@ def process_spell(spell_id, spell_lines, spell_power):
     return n_heal, n_underheal, n_overheal, n_downrank, n_drop_h
 
 
-
 def overheal_cdf(player_name, log_file, spell_power, **kwargs):
     log_lines = raw.get_lines(log_file)
     heal_lines, periodic_lines = raw.get_heals(player_name, log_lines)
@@ -62,7 +61,9 @@ def overheal_cdf(player_name, log_file, spell_power, **kwargs):
 
     for spell_id, lines in heal_lines.items():
         labels.append(sd.spell_name(spell_id))
-        n_heal, n_underheal, n_overheal, n_downrank, n_drop_h = process_spell(spell_id, lines, spell_power, **kwargs)
+        n_heal, n_underheal, n_overheal, n_downrank, n_drop_h = process_spell(
+            spell_id, lines, spell_power, **kwargs
+        )
 
         nn_underheal.append(n_underheal / n_heal)
         nn_overheal.append(n_overheal / n_heal)
@@ -71,7 +72,9 @@ def overheal_cdf(player_name, log_file, spell_power, **kwargs):
 
     for spell_id, lines in periodic_lines.items():
         labels.append(sd.spell_name(spell_id))
-        n_heal, n_underheal, n_overheal, n_downrank, n_drop_h = process_spell(spell_id, lines, spell_power, **kwargs)
+        n_heal, n_underheal, n_overheal, n_downrank, n_drop_h = process_spell(
+            spell_id, lines, spell_power, **kwargs
+        )
 
         nn_underheal.append(n_underheal / n_heal)
         nn_overheal.append(n_overheal / n_heal)
@@ -92,16 +95,29 @@ def overheal_cdf(player_name, log_file, spell_power, **kwargs):
 
     plt.figure(figsize=(8, 6), constrained_layout=True)
     plt.bar(labels, nn_underheal, color="green", label="Underheal")
-    plt.bar(labels, nn_drop_h, color="yellow", bottom=b0, label="Partial OH, less than +heal")
-    plt.bar(labels, nn_downrank, color="orange", bottom=b1, label="Partial OH, more than +heal")
+    plt.bar(
+        labels,
+        nn_drop_h,
+        color="yellow",
+        bottom=b0,
+        label="Partial OH, less than +heal",
+    )
+    plt.bar(
+        labels,
+        nn_downrank,
+        color="orange",
+        bottom=b1,
+        label="Partial OH, more than +heal",
+    )
     plt.bar(labels, nn_overheal, color="red", bottom=b2, label="Full overheal")
 
     plt.ylabel("Fraction of casts")
     plt.xticks(rotation=90)
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.legend(loc="center left", bbox_to_anchor=(1, 0.5))
 
     plt.show()
     plt.savefig(f"figs/{player_name}_summary.png")
+
 
 if __name__ == "__main__":
     import argparse
@@ -110,12 +126,14 @@ if __name__ == "__main__":
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
 Analyses logs and gives summary plot.
-"""
-)
+""",
+    )
 
     parser.add_argument("player_name", help="Player name to analyse overheal for")
     parser.add_argument("log_file", help="Path to the log file to analyse")
-    parser.add_argument("spell_power", type=int, help="Spell power for base heal fraction calculation")
+    parser.add_argument(
+        "spell_power", type=int, help="Spell power for base heal fraction calculation"
+    )
 
     args = parser.parse_args()
 

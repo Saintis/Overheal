@@ -99,14 +99,24 @@ if __name__ == "__main__":
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
 Analyses logs and gives overheal cdf.
-"""
-)
+""",
+    )
 
     parser.add_argument("player_name", help="Player name to analyse overheal for")
     parser.add_argument("log_file", help="Path to the log file to analyse")
     parser.add_argument("--spell_id", type=str, help="Spell id to filter for")
-    parser.add_argument("-p", "--spell_power", type=int, help="Spell power for base heal fraction calculation")
+    parser.add_argument(
+        "-p",
+        "--spell_power",
+        type=int,
+        help="Spell power for base heal fraction calculation",
+    )
 
     args = parser.parse_args()
 
-    overheal_cdf(args.player_name, args.log_file, spell_id=args.spell_id, spell_power=args.spell_power)
+    overheal_cdf(
+        args.player_name,
+        args.log_file,
+        spell_id=args.spell_id,
+        spell_power=args.spell_power,
+    )

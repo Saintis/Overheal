@@ -16,7 +16,7 @@ def filter_out_reduced_healing(raw_heals):
     max_heal = max(raw_heals)
     threshold = 0.75 * max_heal
 
-    selector = (raw_heals > threshold)
+    selector = raw_heals > threshold
 
     return raw_heals[selector]
 
@@ -61,12 +61,21 @@ def process_spell(spell_id, spell_lines, heal_increase=0.0):
     else:
         est_plus_heal = extra_heal / coefficient
 
-    print(f"  {spell_id:>5s}  {spell_name:>26s}  {sample_size:3d}  {spell_heal:+6.1f}  {median_heal:+6.1f}  {extra_heal:+6.1f}  {est_plus_heal:+6.1f}  {crit_rate:5.1%}")
+    print(
+        f"  {spell_id:>5s}  {spell_name:>26s}  {sample_size:3d}  {spell_heal:+6.1f}  {median_heal:+6.1f}  {extra_heal:+6.1f}  {est_plus_heal:+6.1f}  {crit_rate:5.1%}"
+    )
 
     return est_plus_heal, n_heals, n_crits
 
 
-def estimate_spell_power(player_name, log_file, spell_id=None, spiritual_healing=0, improved_renew=0, **kwargs):
+def estimate_spell_power(
+    player_name,
+    log_file,
+    spell_id=None,
+    spiritual_healing=0,
+    improved_renew=0,
+    **kwargs,
+):
     log_lines = raw.get_lines(log_file)
     heal_lines, periodic_lines = raw.get_heals(player_name, log_lines)
 
@@ -74,7 +83,9 @@ def estimate_spell_power(player_name, log_file, spell_id=None, spiritual_healing
     _, heal_lines = group_processed_lines(heal_lines, False, spell_id=spell_id)
     _, periodic_lines = group_processed_lines(periodic_lines, False, spell_id=spell_id)
 
-    print(f"  {'id':>5s}  {'name':>26s}  {'#':>3s}  {'base H':>6s}  {'mean H':>6s}  {'extr H':>6s}  {'Est.+H':>6s}  {'Crit':>5s}")
+    print(
+        f"  {'id':>5s}  {'name':>26s}  {'#':>3s}  {'base H':>6s}  {'mean H':>6s}  {'extr H':>6s}  {'Est.+H':>6s}  {'Crit':>5s}"
+    )
 
     if spell_id:
         # only one will be populated
@@ -89,7 +100,9 @@ def estimate_spell_power(player_name, log_file, spell_id=None, spiritual_healing
         estimates = []
 
         for spell_id, lines in heal_lines.items():
-            est_plus_heal, n_heals, n_crits = process_spell(spell_id, lines, heal_increase=spell_inc)
+            est_plus_heal, n_heals, n_crits = process_spell(
+                spell_id, lines, heal_increase=spell_inc
+            )
             nn_heals += n_heals
             nn_crits += n_crits
             estimates.append(est_plus_heal)
@@ -108,15 +121,25 @@ if __name__ == "__main__":
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
 Analyses logs and and estimates spell power and crit chance.
-"""
-)
+""",
+    )
 
     parser.add_argument("player_name", help="Player name to analyse overheal for")
     parser.add_argument("log_file", help="Path to the log file to analyse")
     parser.add_argument("--spell_id", type=str, help="Spell id to filter for")
-    parser.add_argument("--sh", type=int, help="Levels of Spirital Healing to guess", default=0)
-    parser.add_argument("--ir", type=int, help="Levels of Improved Renew to guess", default=0)
+    parser.add_argument(
+        "--sh", type=int, help="Levels of Spirital Healing to guess", default=0
+    )
+    parser.add_argument(
+        "--ir", type=int, help="Levels of Improved Renew to guess", default=0
+    )
 
     args = parser.parse_args()
 
-    estimate_spell_power(args.player_name, args.log_file, args.spell_id, spiritual_healing=args.sh, improved_renew=args.ir)
+    estimate_spell_power(
+        args.player_name,
+        args.log_file,
+        args.spell_id,
+        spiritual_healing=args.sh,
+        improved_renew=args.ir,
+    )
