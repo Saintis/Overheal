@@ -41,7 +41,27 @@ SPELL_NAMES = {
     "139": "Renew (Rank 1)",
 
     "19243": "Desperate Prayer (Rank 7)",
+
+    "10901": "Power Word: Shield (Rank 10)",
+
+    # Other misc spells
+    "552": "Abolish Disease",
+    "988": "Dispel Magic (Rank 2)",
+    "10890": "Psychic Scream (Rank 4)",
+    "10942": "Fade (Rank 6)",
+    "10947": "Mind Blast (Rank 9)",
+    "10958": "Shadow Protection (Rank 3)",
 }
+
+# Spells that might turn up but we don't care for listing in spell casts
+# These do not cost mana so will not trigger 5sr, or BD (presumably)
+SPELL_IGNORE = [
+    "5019",  # Shoot
+    "14751",  # Inner Focus
+    "16666",  # Demonic Rune
+    "17291",  # Stratholme Holy Water
+    "17531",  # Major Mana Potion
+]
 
 # Spell coefficients of each spell id, for determining weight of heal power
 SPELL_COEFFICIENTS = {
