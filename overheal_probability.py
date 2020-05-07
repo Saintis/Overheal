@@ -14,6 +14,62 @@ import process_raw_logs as raw
 import spell_data as sd
 
 
+def plot_oh_prob(
+    player_name, spell_id, spell_powers, sp_extrap, sp_shift, n_heals, n_overheals, n_heals_nc, n_overheals_nc
+):
+    # Ensure target directory exists
+    os.makedirs("figs/probability", exist_ok=True)
+
+    # extrapolate from first 1/2 of data (0 - spell_power / 2)
+    ii = len(spell_powers) // 2
+    e_sp = np.linspace(spell_powers[ii], sp_extrap, 101)
+
+    oh_p = np.divide(n_overheals, n_heals)
+    oh_p_nc = np.divide(n_overheals_nc, n_heals_nc)
+
+    ns = min(n_heals)
+    ns_nc = min(n_heals_nc)
+
+    plt.figure(constrained_layout=True)
+
+    p = np.polyfit(spell_powers[:ii], oh_p[:ii], 1)
+    plt.plot(e_sp + sp_shift, np.polyval(p, e_sp), "b--", label="Extrapolation")
+    plt.plot(spell_powers + sp_shift, oh_p, label=f"All heals (N={ns})")
+
+    p = np.polyfit(spell_powers[:ii], oh_p_nc[:ii], 1)
+    plt.plot(e_sp + sp_shift, np.polyval(p, e_sp), "r--", label="Extrapolation, no crits")
+    plt.plot(spell_powers + sp_shift, oh_p_nc, label=f"No crits (N={ns_nc})")
+
+    plt.title(f"Overheal probability of {sd.spell_name(spell_id)}")
+    plt.ylabel("Overheal probability")
+    plt.ylim([0, 1])
+    plt.xlabel("Heal power change")
+    plt.yticks([0, 0.25, 0.5, 0.75, 1.0])
+
+    plt.grid()
+    plt.legend()
+
+    plt.savefig(f"figs/probability/{player_name}_overheal_probability_{spell_id}.png")
+
+    # Likelihood plot
+    plt.figure(constrained_layout=True)
+
+    p_oh = np.linspace(0, 1, 1001)
+    l_oh = p_oh ** n_overheals[0] * (1.0 - p_oh) ** (n_heals[0] - n_overheals[0])
+    plt.plot(p_oh, l_oh)
+
+    plt.title(f"Overheal probability likelihood of {sd.spell_name(spell_id)}")
+    plt.ylabel("Overheal probability likelihood")
+    # plt.ylim([0, 1])
+    plt.xlabel("Overheal probability")
+    # plt.yticks([0, 0.25, 0.5, 0.75, 1.0])
+
+    plt.grid()
+    # plt.legend()
+
+    plt.savefig(f"figs/probability/{player_name}_overheal_likelihood_{spell_id}.png")
+
+
 def spell_overheal_probability(player_name, spell_id, lines, spell_power=None):
     """Plots overheal probability of each spell"""
 
@@ -30,29 +86,31 @@ def spell_overheal_probability(player_name, spell_id, lines, spell_power=None):
             sp_extrap = 1500.0 - spell_power
 
     spell_powers = np.linspace(0, -sp_neg, int(sp_neg / 1) + 1)
-    oh_probabilities = []
-    oh_p_no_crit = []
+    n_heals = []
+    n_overheals = []
+
+    n_heals_nc = []
+    n_overheals_nc = []
 
     # Fail more gracefully if we are missing a coefficient
     coefficient = sd.spell_coefficient(spell_id)
     if coefficient == 0:
         return
 
-    n_samples = np.inf
-    n_samples_no_crit = np.inf
-
     for sp in spell_powers:
-        n_heals = 0
-        n_overheals = 0
-        n_heals_no_crit = 0
-        n_oh_no_crit = 0
+        n_h = 0
+        n_oh = 0
+        n_h_nc = 0
+        n_oh_nc = 0
 
         for h, oh, crit in lines:
             dh = coefficient * -sp
+            not_crit = 1
 
             if crit:
                 # scale spell power differential by 1.5 if spell was a crit
                 dh *= 1.5
+                not_crit = 0
 
             h = h - dh
             oh = oh - dh
@@ -61,48 +119,31 @@ def spell_overheal_probability(player_name, spell_id, lines, spell_power=None):
                 # could happen for heals on healing reduced players, we just ignore these for now
                 continue
 
-            n_heals += 1
+            n_h += 1
+            n_h_nc += not_crit
 
             if oh > 0.0:
-                n_overheals += 1
+                n_oh += 1
+                n_oh_nc += not_crit
 
-            if not crit:
-                n_heals_no_crit += 1
+        n_heals.append(n_h)
+        n_overheals.append(n_oh)
 
-                if oh > 0.0:
-                    n_oh_no_crit += 1
+        n_heals_nc.append(n_h_nc)
+        n_overheals_nc.append(n_oh_nc)
 
-        n_samples = min(n_heals, n_samples)
-        n_samples_no_crit = min(n_heals_no_crit, n_samples_no_crit)
-
-        oh_probabilities.append(n_overheals / n_heals)
-        oh_p_no_crit.append(n_oh_no_crit / n_heals_no_crit)
-
-    # extrapolate from first 1/2 of data (0 - spell_power / 2)
-    ii = len(spell_powers) // 2
-    e_sp = np.linspace(spell_powers[ii], sp_extrap, 101)
-
-    plt.figure(constrained_layout=True)
-
-    p = np.polyfit(spell_powers[:ii], oh_probabilities[:ii], 1)
-    plt.plot(e_sp + sp_shift, np.polyval(p, e_sp), "b--", label="Extrapolation")
-    plt.plot(spell_powers + sp_shift, oh_probabilities, label=f"All heals (N={n_samples})")
-
-    p = np.polyfit(spell_powers[:ii], oh_p_no_crit[:ii], 1)
-    plt.plot(e_sp + sp_shift, np.polyval(p, e_sp), "r--", label="Extrapolation, no crits")
-    plt.plot(spell_powers + sp_shift, oh_p_no_crit, label=f"No crits (N={n_samples_no_crit})")
-
-    plt.title(f"Overheal probability of {sd.spell_name(spell_id)}")
-    plt.ylabel("Overheal probability")
-    plt.ylim([0, 1])
-    plt.xlabel("Heal power change")
-    plt.yticks([0, 0.25, 0.5, 0.75, 1.0])
-
-    plt.grid()
-    plt.legend()
-
-    plt.savefig(f"figs/{player_name}_overheal_probability_{spell_id}.png")
-    # plt.show()
+    # plot probabilities
+    plot_oh_prob(
+        player_name,
+        spell_id,
+        spell_powers,
+        sp_extrap,
+        sp_shift,
+        n_heals,
+        n_overheals,
+        n_heals_nc,
+        n_overheals_nc,
+    )
 
 
 def process_log(player_name, log_file, spell_power=500, ignore_crit=False, spell_id=None, **kwargs):
