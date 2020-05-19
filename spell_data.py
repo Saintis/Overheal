@@ -109,6 +109,7 @@ SPELL_NAMES = {
 # Spells that might turn up but we don't care for listing in spell casts
 # These do not cost mana so will not trigger 5sr, or BD (presumably)
 SPELL_IGNORE = [
+    "24354",  # Blessed Prayer Beads
     "17531",  # Major Mana Potion
     "17291",  # Stratholme Holy Water
     "16666",  # Demonic Rune
@@ -183,6 +184,9 @@ SPELL_COEFFICIENTS = {
 
     # Desperate Prayer
     "19243": 0.429,
+
+    # Power Word: Shield
+    "10901": 0.1,
 }
 
 # Raw healing of each spell
@@ -236,6 +240,76 @@ SPELL_HEALS = {
     "19243": 1459.5,
 }
 
+# Mana cost of each spell
+SPELL_MANA = {
+    "10917": 380.0,
+    "10916": 315.0,
+    "10915": 265.0,
+    "9474": 215.0,
+    "9473": 185.0,
+    "9472": 155.0,
+    "2061": 125.0,
+
+    "2053": 75.0,
+
+    "25316": 1070.0,
+    "10961": 1030.0,
+    "10960": 770.0,
+    "996": 560.0,
+    "596": 410.0,
+
+    "25314": 710.0,
+    "10965": 655.0,
+    "10964": 545.0,
+    "10963": 445.0,
+    "2060": 370.0,
+
+    "6064": 305.0,
+    "6063": 255.0,
+    "2055": 205.0,
+    "2054": 155.0,
+
+    "27823": 750.0,
+    "27805": 750.0,
+    "27801": 750.0,
+    # "27804": "Holy Nova (Rank 5)",
+    # "23455": "Holy Nova (Rank 1)",
+
+    "10929": 365.0,
+    "6077": 170.0,
+    "6075": 105.0,
+    "139": 30.0,
+
+    # "19243": "Desperate Prayer (Rank 7)",
+
+    "10901": 500.0,
+
+    # # Other misc spells
+    # "10942": "Fade (Rank 6)",
+    # "10890": "Psychic Scream (Rank 4)",
+    #
+    # # Damage spells
+    # "10947": "Mind Blast (Rank 9)",
+    # "10934": "Smite (Rank 8)",
+    #
+    # # Utility spells
+    # # Priest
+    # "27681": "Prayer of Spirit (Rank 1)",
+    # "21564": "Prayer of Fortitude (Rank 2)",
+    #
+    # "27841": "Divine Spirit (Rank 4)",
+    # "10958": "Shadow Protection (Rank 3)",
+    # "10938": "Power Word: Fortitude (Rank 6)",
+    #
+    # "20770": "Resurrection (Rank 5)",
+    # "10881": "Resurrection (Rank 4)",
+
+    "988": 223.0,
+
+    # "552": "Abolish Disease",
+
+}
+
 # fmt: on
 
 
@@ -260,4 +334,12 @@ def spell_heal(spell_id):
         return SPELL_HEALS[spell_id]
 
     print(f"Unknown base heal for spell {spell_id}")
+    return 0.0
+
+
+def spell_mana(spell_id):
+    if spell_id in SPELL_MANA:
+        return SPELL_MANA[spell_id]
+
+    print(f"Unknown mana cost for spell {spell_id}")
     return 0.0
