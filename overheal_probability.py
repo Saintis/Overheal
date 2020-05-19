@@ -25,32 +25,29 @@ def plot_oh_prob(
     n_heals_nc,
     n_overheals_nc,
 ):
-    # Ensure target directory exists
-    os.makedirs("figs/probability", exist_ok=True)
-
     # extrapolate from first 1/2 of data (0 - spell_power / 2)
     ii = len(spell_powers) // 2
     e_sp = np.linspace(spell_powers[ii], sp_extrap, 101)
 
     oh_p = np.divide(n_overheals, n_heals)
-    oh_p_nc = np.divide(n_overheals_nc, n_heals_nc)
+    oh_p_nc = np.divide(n_overheals_nc, n_heals)
 
     ns = min(n_heals)
-    ns_nc = min(n_heals_nc)
+    # ns_nc = min(n_heals_nc)
 
     plt.figure(constrained_layout=True)
 
     p = np.polyfit(spell_powers[:ii], oh_p[:ii], 1)
     plt.plot(e_sp + sp_shift, np.polyval(p, e_sp), "b--", label="Extrapolation")
-    plt.plot(spell_powers + sp_shift, oh_p, label=f"All heals (N={ns})")
+    plt.plot(spell_powers + sp_shift, oh_p, label=f"All heals")
 
     p = np.polyfit(spell_powers[:ii], oh_p_nc[:ii], 1)
     plt.plot(
         e_sp + sp_shift, np.polyval(p, e_sp), "r--", label="Extrapolation, no crits"
     )
-    plt.plot(spell_powers + sp_shift, oh_p_nc, label=f"No crits (N={ns_nc})")
+    plt.plot(spell_powers + sp_shift, oh_p_nc, label=f"No crits")
 
-    plt.title(f"Overheal probability of {sd.spell_name(spell_id)}")
+    plt.title(f"Overheal probability of {sd.spell_name(spell_id)}, (N={ns})")
     plt.ylabel("Overheal probability")
     plt.ylim([0, 1])
     plt.xlabel("Heal power change")
@@ -59,7 +56,7 @@ def plot_oh_prob(
     plt.grid()
     plt.legend()
 
-    plt.savefig(f"figs/probability/{player_name}_overheal_probability_{spell_id}.png")
+    plt.savefig(f"figs/probability/{player_name}_probability_{spell_id}.png")
 
     # Likelihood plot
     plt.figure(constrained_layout=True)
@@ -68,7 +65,7 @@ def plot_oh_prob(
     l_oh = p_oh ** n_overheals[0] * (1.0 - p_oh) ** (n_heals[0] - n_overheals[0])
     plt.plot(p_oh, l_oh)
 
-    plt.title(f"Overheal probability likelihood of {sd.spell_name(spell_id)}")
+    plt.title(f"Overheal probability likelihood of {sd.spell_name(spell_id)} (N={n_heals[0]})")
     plt.ylabel("Overheal probability likelihood")
     # plt.ylim([0, 1])
     plt.xlabel("Overheal probability")
@@ -77,7 +74,7 @@ def plot_oh_prob(
     plt.grid()
     # plt.legend()
 
-    plt.savefig(f"figs/probability/{player_name}_overheal_likelihood_{spell_id}.png")
+    plt.savefig(f"figs/probability/likelihood/{player_name}_likelihood_{spell_id}.png")
 
 
 def spell_overheal_probability(player_name, spell_id, lines, spell_power=None):
@@ -115,26 +112,34 @@ def spell_overheal_probability(player_name, spell_id, lines, spell_power=None):
 
         for h, oh, crit in lines:
             dh = coefficient * -sp
-            not_crit = 1
+            dh_c = dh
+
+            oh_nc = oh
 
             if crit:
                 # scale spell power differential by 1.5 if spell was a crit
-                dh *= 1.5
-                not_crit = 0
+                dh_c *= 1.5
 
-            h = h - dh
-            oh = oh - dh
+                # Scale oh down
+                oh_nc = oh - (h - h / 1.5)
+
+            # remove spell power contribution
+            h -= dh_c
+            oh -= dh_c
+            oh_nc -= dh
 
             if h < 0.0:
                 # could happen for heals on healing reduced players, we just ignore these for now
                 continue
 
             n_h += 1
-            n_h_nc += not_crit
+            # n_h_nc += not_crit
 
             if oh > 0.0:
                 n_oh += 1
-                n_oh_nc += not_crit
+
+            if oh_nc > 0.0:
+                n_oh_nc += 1
 
         n_heals.append(n_h)
         n_overheals.append(n_oh)
@@ -156,13 +161,11 @@ def spell_overheal_probability(player_name, spell_id, lines, spell_power=None):
     )
 
 
-def process_log(
+def main(
     player_name, log_file, spell_power=500, ignore_crit=False, spell_id=None, **kwargs
 ):
     log_lines = raw.get_lines(log_file)
     heal_lines, _ = raw.get_heals(player_name, log_lines)
-
-    os.makedirs("figs", exist_ok=True)
 
     # Group lines
     _, heal_lines = ot.group_processed_lines(heal_lines, ignore_crit, spell_id=spell_id)
@@ -171,7 +174,11 @@ def process_log(
 
 
 if __name__ == "__main__":
+    import os
     import argparse
+
+    # Make plot dirs
+    os.makedirs("figs/probability/likelihood", exist_ok=True)
 
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -198,7 +205,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    process_log(
+    main(
         args.player_name,
         args.log_file,
         spell_power=args.spell_power,

@@ -42,14 +42,14 @@ def process_spell(player_name, spell_id, spell_lines, spell_power=None, show=Tru
 
         plt.axhline(base_heal_fraction, linestyle="--", color="k", label="Base heal")
 
-    plt.title(spell_name)
+    plt.title(f"{spell_name}, {len(spell_lines)} casts")
     plt.xlabel("Fraction of casts")
     plt.ylabel("Fraction of heal (orange overheal, blue underheal)")
     plt.xlim((0, 1))
     plt.ylim((0, 1))
     plt.legend()
 
-    plt.savefig(f"figs/{player_name}_cdf_{spell_id}.png")
+    plt.savefig(f"figs/cdf/{player_name}_cdf_{spell_id}.png")
 
     # plt.figure(constrained_layout=True)
     # plt.fill_between(relative_underheal, 1 - cast_fraction, label="Underheal")
@@ -93,7 +93,11 @@ def overheal_cdf(player_name, log_file, spell_id=None, **kwargs):
 
 
 if __name__ == "__main__":
+    import os
     import argparse
+
+    # make sure directories exist
+    os.makedirs("figs/cdf", exist_ok=True)
 
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,

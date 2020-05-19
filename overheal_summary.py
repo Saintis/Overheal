@@ -115,8 +115,8 @@ def overheal_cdf(player_name, log_file, spell_power, **kwargs):
     plt.xticks(rotation=90)
     plt.legend(loc="center left", bbox_to_anchor=(1, 0.5))
 
-    plt.show()
     plt.savefig(f"figs/{player_name}_summary.png")
+    plt.show()
 
 
 if __name__ == "__main__":
