@@ -3,9 +3,6 @@ Script that estimates value of 1% crit.
 
 By: Filip Gokstorp (Saintis), 2020
 """
-import numpy as np
-import matplotlib.pyplot as plt
-
 import process_raw_logs as raw
 import spell_data as sd
 from overheal_table import group_processed_lines
@@ -22,7 +19,7 @@ def process_spell(spell_id, spell_lines):
         if not crit:
             continue
 
-        ch = h * (1/3)
+        ch = h * (1 / 3)
         cuh = max(0.0, ch - oh)
 
         crit_fullheal.append(ch)
@@ -67,7 +64,9 @@ def print_results(data):
 
         crit_pc = n_crits / n_spells
 
-        message = f"  {spell_name:<30s}: {n_crits:3d} / {n_spells:3d} crits ({crit_pc:5.1%})"
+        message = (
+            f"  {spell_name:<30s}: {n_crits:3d} / {n_spells:3d} crits ({crit_pc:5.1%})"
+        )
 
         if n_crits == 0:
             print(message)
@@ -90,7 +89,9 @@ def print_results(data):
     spell_name = "Overall / Average"
     coef = s_coef / nn_crits
 
-    message = f"  {spell_name:<30s}: {nn_crits:3d} / {nn_spells:3d} crits ({crit_pc:5.1%})"
+    message = (
+        f"  {spell_name:<30s}: {nn_crits:3d} / {nn_spells:3d} crits ({crit_pc:5.1%})"
+    )
 
     if nn_crits == 0:
         print(message)
@@ -111,7 +112,7 @@ def print_results(data):
     print(message)
 
 
-def main(player_name, log_file, spell_id=None, **kwargs):
+def main(player_name, log_file, spell_id=None):
     log_lines = raw.get_lines(log_file)
     heal_lines, _ = raw.get_heals(player_name, log_lines)
 
@@ -136,6 +137,7 @@ def main(player_name, log_file, spell_id=None, **kwargs):
 
     print_results(data)
 
+
 if __name__ == "__main__":
     import os
     import argparse
@@ -144,24 +146,15 @@ if __name__ == "__main__":
     os.makedirs("figs/crit", exist_ok=True)
 
     parser = argparse.ArgumentParser(
-        description="Analyses log and estimates healing of crits."
+        description="Analyses log and estimates healing of crits. Counts up the healing and overhealing done by each "
+        "found crit. Prints out extra healing done by each crit on average and the equivalent +heal worth "
+        "for each spell, and for the average spell profile over the whole combat log."
     )
 
     parser.add_argument("player_name", help="Player name to analyse overheal for")
     parser.add_argument("log_file", help="Path to the log file to analyse")
     parser.add_argument("--spell_id", type=str, help="Spell id to filter for")
-    parser.add_argument(
-        "-p",
-        "--spell_power",
-        type=int,
-        help="Spell power for base heal fraction calculation",
-    )
 
     args = parser.parse_args()
 
-    main(
-        args.player_name,
-        args.log_file,
-        spell_id=args.spell_id,
-        spell_power=args.spell_power,
-    )
+    main(args.player_name, args.log_file, spell_id=args.spell_id)
