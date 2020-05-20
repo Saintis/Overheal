@@ -14,9 +14,15 @@ def process_spell(spell_id, spell_lines):
     crit_underheal = []
     crit_fullheal = []
 
+    hh = 0
+    ohh = 0
+
     for h, oh, crit in spell_lines:
         # we only care about crits
+
         if not crit:
+            hh += h
+            ohh += oh
             continue
 
         ch = h * (1 / 3)
@@ -34,7 +40,7 @@ def process_spell(spell_id, spell_lines):
         crit_fh = sum(crit_fullheal) / n_crits
         crit_uh = sum(crit_underheal) / n_crits
 
-    return [spell_id, n_crits, n_spells, crit_fh, crit_uh]
+    return (spell_id, n_crits, n_spells, crit_fh, crit_uh, hh, ohh)
 
 
 def print_results(data):
@@ -51,8 +57,10 @@ def print_results(data):
     s_crit_fh = 0
     s_crit_uh = 0
     s_coef = 0
+    t_hh = 0
+    t_oh = 0
 
-    for spell_id, n_crits, n_spells, crit_fh, crit_uh in data:
+    for spell_id, n_crits, n_spells, crit_fh, crit_uh, hh, ohh in data:
         spell_name = sd.spell_name(spell_id)
         coef = sd.spell_coefficient(spell_id)
 
@@ -61,11 +69,13 @@ def print_results(data):
         s_crit_fh += crit_fh * n_crits
         s_crit_uh += crit_uh * n_crits
         s_coef += coef * n_crits
+        t_hh += hh
+        t_oh += ohh
 
         crit_pc = n_crits / n_spells
 
         message = (
-            f"  {spell_name:<30s}: {n_crits:3d} / {n_spells:3d} crits ({crit_pc:5.1%})"
+            f"  {spell_name:<30s}: {n_crits:3d} / {n_spells:3d} crits ({crit_pc:5.1%}); ({ohh / hh:5.1%} OH)"
         )
 
         if n_crits == 0:
@@ -90,7 +100,7 @@ def print_results(data):
     coef = s_coef / nn_crits
 
     message = (
-        f"  {spell_name:<30s}: {nn_crits:3d} / {nn_spells:3d} crits ({crit_pc:5.1%})"
+        f"  {spell_name:<30s}: {nn_crits:3d} / {nn_spells:3d} crits ({crit_pc:5.1%}); ({t_oh / t_hh:5.1%} OH)"
     )
 
     if nn_crits == 0:
