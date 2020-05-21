@@ -3,7 +3,8 @@ Script that estimates value of 1% crit.
 
 By: Filip Gokstorp (Saintis), 2020
 """
-import process_raw_logs as raw
+import read_from_raw as raw
+import read_from_wcl as wcl
 import spell_data as sd
 from overheal_table import group_processed_lines
 
@@ -19,10 +20,10 @@ def process_spell(spell_id, spell_lines):
 
     for h, oh, crit in spell_lines:
         # we only care about crits
+        hh += h
+        ohh += oh
 
         if not crit:
-            hh += h
-            ohh += oh
             continue
 
         ch = h * (1 / 3)
@@ -80,16 +81,17 @@ def print_results(data):
 
         if n_crits == 0:
             print(message)
-            return
+            continue
 
         crit_oh = crit_fh - crit_uh
         oh_pc = crit_oh / crit_fh
 
         crit_heal = 0.01 * crit_uh
-        eq_hp = crit_heal / coef
+        eq_h_0c = crit_heal / coef
+        eq_h = eq_h_0c / (1.0 + 0.5 * crit_pc)
 
         message += f", Crit H: {crit_fh:4.0f} ({crit_uh:4.0f} + {crit_oh:4.0f} oh)  ({oh_pc:5.1%} oh)"
-        message += f", 1% crit gives {0.01 * crit_uh:+4.1f} healing eq to {eq_hp:+5.1f} heal power."
+        message += f", 1% crit gives {0.01 * crit_uh:+4.1f} healing eq to {eq_h:+5.1f} h ({eq_h_0c:+5.1f} at 0% crit)."
 
         print(message)
 
@@ -114,20 +116,32 @@ def print_results(data):
     oh_pc = crit_oh / crit_fh
 
     crit_heal = 0.01 * crit_uh
-    eq_hp = crit_heal / coef
+    eq_h_0c = crit_heal / coef
+    eq_h = eq_h_0c / (1.0 + 0.5 * crit_pc)
 
     message += f", Crit H: {crit_fh:4.0f} ({crit_uh:4.0f} + {crit_oh:4.0f} oh)  ({oh_pc:5.1%} oh)"
-    message += f", 1% crit gives {0.01 * crit_uh:+4.1f} healing eq to {eq_hp:+5.1f} heal power."
+    message += f", 1% crit gives {0.01 * crit_uh:+4.1f} healing eq to {eq_h:+5.1f} h ({eq_h_0c:+5.1f} at 0% crit)."
 
     print(message)
 
 
-def main(player_name, log_file, spell_id=None):
-    log_lines = raw.get_lines(log_file)
-    heal_lines, _ = raw.get_heals(player_name, log_lines)
+def main(args):
+    player_name = args.player_name
+    log_file = args.log_file
+    spell_id = args.spell_id
+    url = args.url
+
+    if "https://" in log_file or "http://" in log_file:
+        url = log_file
+
+    if url:
+        heal_lines = wcl.read_from_url(url)
+    else:
+        log_lines = raw.get_lines(log_file)
+        heal_lines, _ = raw.get_heals(player_name, log_lines)
 
     # Group lines
-    _, heal_lines = group_processed_lines(heal_lines, False, spell_id=spell_id)
+    heal_lines = group_processed_lines(heal_lines, False, spell_id=spell_id)
 
     data = []
 
@@ -164,7 +178,10 @@ if __name__ == "__main__":
     parser.add_argument("player_name", help="Player name to analyse overheal for")
     parser.add_argument("log_file", help="Path to the log file to analyse")
     parser.add_argument("--spell_id", type=str, help="Spell id to filter for")
+    parser.add_argument(
+        "-u", "--url", action="store_true", help="Tells scripts that the provided logfile is a WCL link."
+    )
 
     args = parser.parse_args()
 
-    main(args.player_name, args.log_file, spell_id=args.spell_id)
+    main(args)

@@ -5,8 +5,8 @@ By: Filip Gokstorp (Saintis), 2020
 """
 import numpy as np
 
-import process_raw_logs as raw
-from spell_data import SPELL_COEFFICIENTS, SPELL_NAMES
+import read_from_raw as raw
+import spell_data as sd
 
 
 def group_processed_lines(processed_lines, ignore_crit, spell_id=None):
@@ -17,13 +17,10 @@ def group_processed_lines(processed_lines, ignore_crit, spell_id=None):
     """
 
     id_dict = dict()
-    name_dict = dict()
 
     filter_spell_id = spell_id
 
-    for spell_id, spell_name, total_heal, overheal, is_crit in processed_lines:
-        is_crit = True if is_crit == "1\n" else False
-
+    for time_stamp, source, spell_id, target, total_heal, overheal, is_crit in processed_lines:
         if ignore_crit and is_crit:
             continue
 
@@ -31,18 +28,11 @@ def group_processed_lines(processed_lines, ignore_crit, spell_id=None):
             continue
 
         if spell_id not in id_dict:
-            # add name to name dict
-            if spell_id in SPELL_NAMES:
-                stripped_name = SPELL_NAMES[spell_id]
-            else:
-                stripped_name = spell_name.strip('"')
-                stripped_name += f" [{spell_id}]"
-            name_dict[spell_id] = stripped_name
             id_dict[spell_id] = []
 
-        id_dict[spell_id].append((int(total_heal), int(overheal), is_crit))
+        id_dict[spell_id].append((total_heal, overheal, is_crit))
 
-    return name_dict, id_dict
+    return id_dict
 
 
 def print_spell_aggregate(id, name, data):
@@ -74,11 +64,7 @@ def aggregate_lines(grouped_lines, spell_power=0.0):
         data[0] = len(spell_data)
 
         # Fail more gracefully if we are missing a coefficient
-        if id in SPELL_COEFFICIENTS:
-            coefficient = SPELL_COEFFICIENTS[id]
-        else:
-            print(f"Unknown coefficient for spell id {id}!")
-            coefficient = 0
+        coefficient = sd.spell_coefficient(id)
 
         for h, oh, crit in spell_data:
             dh = coefficient * spell_power
@@ -121,7 +107,7 @@ def aggregate_lines(grouped_lines, spell_power=0.0):
     return total_data, data_list
 
 
-def display_lines(names, total_data, data_list, group):
+def display_lines(total_data, data_list, group):
     """Print data lines for cli display"""
     if len(data_list) == 0:
         return
@@ -130,8 +116,8 @@ def display_lines(names, total_data, data_list, group):
         f"{'id':>5s}  {group + ' name':28s}  {'#H':>3s}  {'No OH':>7s}  {'Any OH':>7s}  {'Half OH':>7s}  {'Full OH':>7s}  {'% OHd':>7s}"
     )
 
-    for id, data in data_list:
-        print_spell_aggregate(id, names[id], data)
+    for spell_id, data in data_list:
+        print_spell_aggregate(spell_id, sd.spell_name(spell_id), data)
 
     print("-" * (5 + 2 + 28 + 2 + 3 + 2 + 7 + 2 + 7 + 2 + 7 + 2 + 7 + 2 + 7))
 
@@ -147,15 +133,15 @@ def process_log(player_name, log_file, ignore_crit=False, **kwargs):
     heal_lines, periodic_lines = raw.get_heals(player_name, log_lines)
 
     # Group lines
-    names, heal_lines = group_processed_lines(heal_lines, ignore_crit)
-    periodic_names, periodic_lines = group_processed_lines(periodic_lines, ignore_crit)
+    heal_lines = group_processed_lines(heal_lines, ignore_crit)
+    periodic_lines = group_processed_lines(periodic_lines, ignore_crit)
 
     # Aggregate and display data
     total_data, data_list = aggregate_lines(heal_lines, **kwargs)
-    display_lines(names, total_data, data_list, "Spell")
+    display_lines(total_data, data_list, "Spell")
     print("")
     total_data, data_list = aggregate_lines(periodic_lines, **kwargs)
-    display_lines(periodic_names, total_data, data_list, "Periodic")
+    display_lines(total_data, data_list, "Periodic")
 
 
 if __name__ == "__main__":

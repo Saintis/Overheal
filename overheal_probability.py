@@ -3,14 +3,11 @@ Script that gets the probability of an overheal based of +heal.
 
 By: Filip Gokstorp (Saintis), 2020
 """
-import os
-
 import numpy as np
 import matplotlib.pyplot as plt
-from textwrap import wrap
 
 import overheal_table as ot
-import process_raw_logs as raw
+import read_from_raw as raw
 import spell_data as sd
 
 
@@ -22,7 +19,6 @@ def plot_oh_prob(
     sp_shift,
     n_heals,
     n_overheals,
-    n_heals_nc,
     n_overheals_nc,
 ):
     # extrapolate from first 1/2 of data (0 - spell_power / 2)
@@ -95,8 +91,6 @@ def spell_overheal_probability(player_name, spell_id, lines, spell_power=None):
     spell_powers = np.linspace(0, -sp_neg, int(sp_neg / 1) + 1)
     n_heals = []
     n_overheals = []
-
-    n_heals_nc = []
     n_overheals_nc = []
 
     # Fail more gracefully if we are missing a coefficient
@@ -107,7 +101,6 @@ def spell_overheal_probability(player_name, spell_id, lines, spell_power=None):
     for sp in spell_powers:
         n_h = 0
         n_oh = 0
-        n_h_nc = 0
         n_oh_nc = 0
 
         for h, oh, crit in lines:
@@ -144,7 +137,6 @@ def spell_overheal_probability(player_name, spell_id, lines, spell_power=None):
         n_heals.append(n_h)
         n_overheals.append(n_oh)
 
-        n_heals_nc.append(n_h_nc)
         n_overheals_nc.append(n_oh_nc)
 
     # plot probabilities
@@ -156,7 +148,6 @@ def spell_overheal_probability(player_name, spell_id, lines, spell_power=None):
         sp_shift,
         n_heals,
         n_overheals,
-        n_heals_nc,
         n_overheals_nc,
     )
 
@@ -168,7 +159,7 @@ def main(
     heal_lines, _ = raw.get_heals(player_name, log_lines)
 
     # Group lines
-    _, heal_lines = ot.group_processed_lines(heal_lines, ignore_crit, spell_id=spell_id)
+    heal_lines = ot.group_processed_lines(heal_lines, ignore_crit, spell_id=spell_id)
     for spell_id, lines in heal_lines.items():
         spell_overheal_probability(player_name, spell_id, lines, spell_power)
 

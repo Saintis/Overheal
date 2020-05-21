@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from textwrap import wrap
 
-import process_raw_logs as raw
+import read_from_raw as raw
 import overheal_table as ot
 import spell_data as sd
 
@@ -18,6 +18,7 @@ def plot_overheal(player_name, spell_powers, spell_id, data, sp_shift=0, sp_extr
     os.makedirs("figs/overheal", exist_ok=True)
 
     sp = spell_powers + sp_shift
+    spell_name = sd.spell_name(spell_id)
 
     total_heals, total_overheals, total_underheals, count_heals, nn_underheals, nn_overheals, nn_full_overheals = data
 
@@ -26,7 +27,7 @@ def plot_overheal(player_name, spell_powers, spell_id, data, sp_shift=0, sp_extr
     plt.plot(sp, total_overheals, label="Overheal")
     plt.plot(sp, total_underheals, label="Actual heal")
 
-    plt.title("\n".join(wrap("Average healing per cast as +heal varies", 60)))
+    plt.title(f"Average healing per cast as +heal varies\n{spell_name}")
     plt.xlabel("Heal power")
     plt.ylabel("Healing output")
     plt.ylim([0, None])
@@ -197,7 +198,7 @@ def main(
     heal_lines, periodic_lines = raw.get_heals(player_name, log_lines)
 
     # Group lines
-    _, heal_lines = ot.group_processed_lines(
+    heal_lines = ot.group_processed_lines(
         heal_lines, ignore_crit, spell_id=spell_id
     )
 

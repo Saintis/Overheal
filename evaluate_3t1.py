@@ -6,7 +6,7 @@ By: Filip Gokstorp (Saintis-Dreadmist), 2020
 
 from datetime import datetime
 
-import process_raw_logs as raw
+import read_from_raw as raw
 
 ENCOUNTER_START = "ENCOUNTER_START"
 ENCOUNTER_END = "ENCOUNTER_END"

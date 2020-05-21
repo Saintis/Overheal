@@ -6,7 +6,7 @@ By: Filip Gokstorp (Saintis), 2020
 import numpy as np
 import matplotlib.pyplot as plt
 
-import process_raw_logs as raw
+import read_from_raw as raw
 import spell_data as sd
 from overheal_table import group_processed_lines
 
@@ -44,13 +44,13 @@ def process_spell(spell_id, spell_lines, spell_power):
     return n_heal, n_underheal, n_overheal, n_downrank, n_drop_h
 
 
-def overheal_cdf(player_name, log_file, spell_power, **kwargs):
+def main(player_name, log_file, spell_power):
     log_lines = raw.get_lines(log_file)
     heal_lines, periodic_lines = raw.get_heals(player_name, log_lines)
 
     # Group lines
-    _, heal_lines = group_processed_lines(heal_lines, False)
-    _, periodic_lines = group_processed_lines(periodic_lines, False)
+    heal_lines = group_processed_lines(heal_lines, False)
+    periodic_lines = group_processed_lines(periodic_lines, False)
 
     labels = []
 
@@ -62,7 +62,7 @@ def overheal_cdf(player_name, log_file, spell_power, **kwargs):
     for spell_id, lines in heal_lines.items():
         labels.append(sd.spell_name(spell_id))
         n_heal, n_underheal, n_overheal, n_downrank, n_drop_h = process_spell(
-            spell_id, lines, spell_power, **kwargs
+            spell_id, lines, spell_power
         )
 
         nn_underheal.append(n_underheal / n_heal)
@@ -73,7 +73,7 @@ def overheal_cdf(player_name, log_file, spell_power, **kwargs):
     for spell_id, lines in periodic_lines.items():
         labels.append(sd.spell_name(spell_id))
         n_heal, n_underheal, n_overheal, n_downrank, n_drop_h = process_spell(
-            spell_id, lines, spell_power, **kwargs
+            spell_id, lines, spell_power
         )
 
         nn_underheal.append(n_underheal / n_heal)
@@ -123,10 +123,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        description="""\
-Analyses logs and gives summary plot.
-""",
+        description="Analyses logs and gives summary plot."
     )
 
     parser.add_argument("player_name", help="Player name to analyse overheal for")
@@ -137,4 +134,4 @@ Analyses logs and gives summary plot.
 
     args = parser.parse_args()
 
-    overheal_cdf(args.player_name, args.log_file, args.spell_power)
+    main(args.player_name, args.log_file, args.spell_power)

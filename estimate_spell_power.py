@@ -6,7 +6,7 @@ By: Filip Gokstorp (Saintis), 2020
 import numpy as np
 import matplotlib.pyplot as plt
 
-import process_raw_logs as raw
+import read_from_raw as raw
 import spell_data as sd
 from overheal_table import group_processed_lines
 
@@ -62,7 +62,7 @@ def process_spell(spell_id, spell_lines, heal_increase=0.0):
         est_plus_heal = extra_heal / coefficient
 
     print(
-        f"  {spell_id:>5s}  {spell_name:>26s}  {sample_size:3d}  {spell_heal:+6.1f}  {median_heal:+6.1f}  {extra_heal:+6.1f}  {est_plus_heal:+6.1f}  {crit_rate:5.1%}"
+        f"  {spell_id:>5s}  {spell_name:>26s}  {sample_size:3d}  {spell_heal:+7.1f}  {median_heal:+7.1f}  {extra_heal:+6.1f}  {est_plus_heal:+6.1f}  {crit_rate:5.1%}"
     )
 
     return est_plus_heal, n_heals, n_crits
@@ -80,11 +80,11 @@ def estimate_spell_power(
     heal_lines, periodic_lines = raw.get_heals(player_name, log_lines)
 
     # Group lines
-    _, heal_lines = group_processed_lines(heal_lines, False, spell_id=spell_id)
-    _, periodic_lines = group_processed_lines(periodic_lines, False, spell_id=spell_id)
+    heal_lines = group_processed_lines(heal_lines, False, spell_id=spell_id)
+    periodic_lines = group_processed_lines(periodic_lines, False, spell_id=spell_id)
 
     print(
-        f"  {'id':>5s}  {'name':>26s}  {'#':>3s}  {'base H':>6s}  {'mean H':>6s}  {'extr H':>6s}  {'Est.+H':>6s}  {'Crit':>5s}"
+        f"  {'id':>5s}  {'name':>26s}  {'#':>3s}  {'base H':>7s}  {'mean H':>7s}  {'extr H':>6s}  {'Est.+H':>6s}  {'Crit':>5s}"
     )
 
     if spell_id:
@@ -125,7 +125,7 @@ Analyses logs and and estimates spell power and crit chance.
     )
 
     parser.add_argument("player_name", help="Player name to analyse overheal for")
-    parser.add_argument("log_file", help="Path to the log file to analyse")
+    parser.add_argument("log_file", help="Path to the log file to analyse, or url to WCL page to scrape for data.")
     parser.add_argument("--spell_id", type=str, help="Spell id to filter for")
     parser.add_argument(
         "--sh", type=int, help="Levels of Spirital Healing to guess", default=0

@@ -6,7 +6,7 @@ By: Filip Gokstorp (Saintis), 2020
 import numpy as np
 import matplotlib.pyplot as plt
 
-import process_raw_logs as raw
+import read_from_raw as raw
 import spell_data as sd
 from overheal_table import group_processed_lines
 
@@ -71,10 +71,11 @@ def overheal_cdf(player_name, log_file, spell_id=None, **kwargs):
     heal_lines, periodic_lines = raw.get_heals(player_name, log_lines)
 
     # Group lines
-    _, heal_lines = group_processed_lines(heal_lines, False, spell_id=spell_id)
-    _, periodic_lines = group_processed_lines(periodic_lines, False, spell_id=spell_id)
+    heal_lines = group_processed_lines(heal_lines, False, spell_id=spell_id)
+    periodic_lines = group_processed_lines(periodic_lines, False, spell_id=spell_id)
 
     if spell_id:
+        lines = []
         # Only one will be populated
         if spell_id in heal_lines:
             lines = heal_lines[spell_id]

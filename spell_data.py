@@ -66,6 +66,7 @@ SPELL_NAMES = {
     "20770": "Resurrection (Rank 5)",
     "10881": "Resurrection (Rank 4)",
 
+    "527": "Dispel Magic (Rank 1)",
     "988": "Dispel Magic (Rank 2)",
     "552": "Abolish Disease",
 
@@ -93,6 +94,8 @@ SPELL_NAMES = {
 
     # Paladin
     "20773": "Redemption (Rank 5)",
+
+    "4987": "Cleanse",
 
     # Hunter
     "19801": "Tranquilizing Shot",

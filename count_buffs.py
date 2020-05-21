@@ -4,7 +4,7 @@ Count up cast buffs and resurrections.
 By: Filip Gokstorp (Saintis-Dreadmist), 2020
 """
 import spell_data as sd
-import process_raw_logs as raw
+import read_from_raw as raw
 
 
 def get_line_data(line):
