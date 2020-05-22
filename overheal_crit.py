@@ -5,6 +5,7 @@ By: Filip Gokstorp (Saintis), 2020
 """
 import read_from_raw as raw
 import read_from_wcl as wcl
+import read_from_api as api
 import spell_data as sd
 from overheal_table import group_processed_lines
 
@@ -129,13 +130,10 @@ def main(args):
     player_name = args.player_name
     log_file = args.log_file
     spell_id = args.spell_id
-    url = args.url
 
-    if "https://" in log_file or "http://" in log_file:
-        url = log_file
-
-    if url:
-        heal_lines = wcl.read_from_url(url)
+    if args.report:
+        # use a link to a WCL report instead
+        heal_lines, _, _ = api.get_heals(args.report, name=player_name, start=args.start, end=args.end)
     else:
         log_lines = raw.get_lines(log_file)
         heal_lines, _ = raw.get_heals(player_name, log_lines)
@@ -176,11 +174,11 @@ if __name__ == "__main__":
     )
 
     parser.add_argument("player_name", help="Player name to analyse overheal for")
-    parser.add_argument("log_file", help="Path to the log file to analyse")
-    parser.add_argument("--spell_id", type=str, help="Spell id to filter for")
-    parser.add_argument(
-        "-u", "--url", action="store_true", help="Tells scripts that the provided logfile is a WCL link."
-    )
+    parser.add_argument("log_file", nargs="?", help="Path to the log file to analyse")
+    parser.add_argument("--spell_id", help="Spell id to filter for")
+    parser.add_argument("-r", "--report", help="Warcraft Logs report code to get heals for.")
+    parser.add_argument("--start", type=int, help="Start of fight to look at. Only works with WCL code.")
+    parser.add_argument("--end", type=int, help="End of fight to look at. Only works with WCL code.")
 
     args = parser.parse_args()
 
