@@ -70,6 +70,8 @@ SPELL_NAMES = {
     "988": "Dispel Magic (Rank 2)",
     "552": "Abolish Disease",
 
+    "10060": "Power Infusion",
+
     # Mage
     "23028": "Arcane Brilliance (Rank 1)",
     "10157": "Arcane Intellect (Rank 5)",
@@ -87,6 +89,17 @@ SPELL_NAMES = {
     "2782": "Remove Curse",
 
     # Shaman
+    "10623": "Chain Heal (Rank 3)",
+    "10622": "Chain Heal (Rank 2)",
+    "1064": "Chain Heal (Rank 1)",
+
+    "10468": "Lesser Healing Wave (Rank 6)",
+    "8008": "Lesser Healing Wave (Rank 2)",
+
+    "10396": "Healing Wave (Rank 9)",
+    "939": "Healing Wave (Rank 5)",
+    "331": "Healing Wave (Rank 1)",
+
     "20777": "Ancestral Spirit (Rank 5)",
 
     "2870": "Cure Disease",
