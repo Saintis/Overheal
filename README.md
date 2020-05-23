@@ -3,7 +3,7 @@
 
 Overheal analysis of WoW Classic combatlogs.
 
-The two scripts look at the same data and process it similarly.
+Two scripts look at the same data and process it similarly.
 
 `overheal_table.py` outputs a list of spells used, and overheal frequency.
 
@@ -27,11 +27,23 @@ Run `python3 overheal_plot.py -h` for more options.
 
 Figures from the script will be saved in a `figs` directory.
 
-## Plot of single spell
+## Reading data from Warcraft Logs
 
-To get a plot of just one spell use the `--spell_id` option
+Some scripts can use data from a Warcraft Logs report instead of a raw combat log file.
 
-E.g. (for Heal Rank 2)
+To get this working you need to get your api key from the WCL website. Make sure you have an account and look for it at the bottom of your profile page, [here](https://classic.warcraftlogs.com/profile). Save that api key to a text file called `apikey.txt` in the same folder you downloaded the scripts to and it should work.
+
+You tell the script to read in a WCL with the option `-r`. For example
+```
+python3 overheal_crit.py [player_name] -r [report code]
+```
+You can find your `[report code]` in the WCL url after `report/`.
+
+## Data for a single spell
+
+To get data of just one spell use the `--spell_id` option
+
+E.g. (for Heal Rank 2, id `2055`)
 ```
 python3 overheal_plot.py Saintis WoWCombatLog.txt --spell_id 2055
 ```
