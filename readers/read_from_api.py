@@ -9,7 +9,27 @@ except FileNotFoundError:
     print("API key not found. Please save in a plain text file called `apikey.txt`.")
     exit(100)
 
+
 API_ROOT = "https://classic.warcraftlogs.com:443/v1"
+
+
+class ProgressBar:
+    """Simple CLI progress bar"""
+
+    def __init__(self, end, length=70):
+        self.end = end
+        self.length = length
+
+    def render(self, progress):
+        """Render the progress bar"""
+        pct = progress / self.end
+        n_bars = int(progress * self.length)
+        bars = "=" * n_bars
+        if n_bars < self.length:
+            bars += ">"
+
+        return f"[{bars:70s}]  {pct:4.0%}  {progress:8d} / {self.end:8d}"
+
 
 
 def _get_api_request(url):
@@ -68,33 +88,29 @@ def _get_heals(code, start=0, end=None, names=None, for_player=None):
     periodics = []
     absorbs = []
 
+    next_start = start
+
     print("Fetching data from WCL...")
-    progress_bar_length = 70
+    progress_bar = ProgressBar(end - start, length=70)
 
     # will have to loop to get results
     request_more = True
     while request_more:
-        url = f"{API_ROOT}/report/events/healing/{code}?start={start}&end={end}&api_key={API_KEY}"
-        # print(url)
-        progress = start / end
-        n_bars = int(progress * progress_bar_length)
-        bars = "=" * n_bars
-        if n_bars < progress_bar_length:
-            bars += ">"
+        url = f"{API_ROOT}/report/events/healing/{code}?start={next_start}&end={end}&api_key={API_KEY}"
 
-        print(f"[{bars:70s}]  {progress:4.0%}  {start:8d} / {end:8d}", end="\r")
+        print(progress_bar.render(next_start - start), end="\r")
 
         data = _get_api_request(url)
         events = data["events"]
         if "nextPageTimestamp" in data:
-            start = data["nextPageTimestamp"]
+            next_start = data["nextPageTimestamp"]
         else:
             request_more = False
 
         for e in events:
             try:
                 timestamp = e["timestamp"]
-                # timestamp = datetime.fromtimestamp(timestamp / 1000.0).time()
+                timestamp = datetime.fromtimestamp(timestamp / 1000.0).time()
                 spell_id = str(e["ability"]["guid"])
 
                 if "sourceID" not in e:
@@ -141,11 +157,10 @@ def _get_heals(code, start=0, end=None, names=None, for_player=None):
                     )
                 )
             except Exception as ex:
-                print(e)
+                print("Exception while handling line", e)
                 print(ex)
 
-    print(f"[{'=' * progress_bar_length:70s}]  {1.0:4.0%}  {end:8d} / {end:8d}")
-    # print("")
+    print(progress_bar.render(end))
 
     return heals, periodics, absorbs
 
@@ -175,7 +190,7 @@ def get_heals(code, start=None, end=None, name=None):
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser("Tests the api reading code.")
 
     parser.add_argument("code")
     parser.add_argument("-n", "--name")

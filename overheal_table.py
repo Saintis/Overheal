@@ -5,7 +5,7 @@ By: Filip Gokstorp (Saintis), 2020
 """
 import numpy as np
 
-import read_from_raw as raw
+from readers import read_from_raw as raw
 import spell_data as sd
 
 

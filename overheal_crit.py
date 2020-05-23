@@ -3,9 +3,10 @@ Script that estimates value of 1% crit.
 
 By: Filip Gokstorp (Saintis), 2020
 """
-import read_from_raw as raw
-import read_from_wcl as wcl
-import read_from_api as api
+from readers import (
+    read_from_raw as raw,
+    read_from_api as api
+)
 import spell_data as sd
 from overheal_table import group_processed_lines
 

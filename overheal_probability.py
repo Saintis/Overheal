@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import overheal_table as ot
-import read_from_raw as raw
+from readers import read_from_raw as raw
 import spell_data as sd
 
 
@@ -172,7 +172,6 @@ if __name__ == "__main__":
     os.makedirs("figs/probability/likelihood", exist_ok=True)
 
     parser = argparse.ArgumentParser(
-        formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""Plots probability of overheals for different spells.""",
     )
 

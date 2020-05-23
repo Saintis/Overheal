@@ -6,7 +6,7 @@ By: Filip Gokstorp (Saintis), 2020
 import numpy as np
 import matplotlib.pyplot as plt
 
-import read_from_raw as raw
+from readers import read_from_raw as raw
 import spell_data as sd
 from overheal_table import group_processed_lines
 

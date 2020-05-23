@@ -7,9 +7,8 @@ import os
 
 import numpy as np
 import matplotlib.pyplot as plt
-from textwrap import wrap
 
-import read_from_raw as raw
+from readers import read_from_raw as raw
 import overheal_table as ot
 import spell_data as sd
 

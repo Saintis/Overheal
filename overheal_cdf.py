@@ -6,7 +6,7 @@ By: Filip Gokstorp (Saintis), 2020
 import numpy as np
 import matplotlib.pyplot as plt
 
-import read_from_raw as raw
+from readers import read_from_raw as raw
 import spell_data as sd
 from overheal_table import group_processed_lines
 
@@ -101,10 +101,7 @@ if __name__ == "__main__":
     os.makedirs("figs/cdf", exist_ok=True)
 
     parser = argparse.ArgumentParser(
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        description="""\
-Analyses logs and gives overheal cdf.
-""",
+        description="Analyses logs and gives overheal cdf.",
     )
 
     parser.add_argument("player_name", help="Player name to analyse overheal for")
