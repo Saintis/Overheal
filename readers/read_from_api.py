@@ -1,4 +1,8 @@
-"""Read data from WCL API."""
+"""
+Read data from WCL API.
+
+By: Filip Gokstorp (Saintis), 2020
+"""
 import requests
 from json.decoder import JSONDecodeError
 from datetime import datetime
@@ -22,8 +26,10 @@ class ProgressBar:
 
     def render(self, progress):
         """Render the progress bar"""
+        assert progress >= 0, "Progress must be positive"
+
         pct = progress / self.end
-        n_bars = int(progress * self.length)
+        n_bars = int(pct * self.length)
         bars = "=" * n_bars
         if n_bars < self.length:
             bars += ">"
@@ -165,7 +171,7 @@ def _get_heals(code, start=0, end=None, names=None, for_player=None):
     return heals, periodics, absorbs
 
 
-def get_heals(code, start=None, end=None, name=None):
+def get_heals(code, start=None, end=None, name=None, **_):
     """
     Gets heal events for specified log code.
 
