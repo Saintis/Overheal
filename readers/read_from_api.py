@@ -8,7 +8,7 @@ from json.decoder import JSONDecodeError
 from datetime import datetime
 
 try:
-    API_KEY = open("apikey.txt").read().strip()
+    API_KEY = open("apikey.txt", "r").read().strip()
 except FileNotFoundError:
     print("API key not found. Please save in a plain text file called `apikey.txt`.")
     exit(100)
@@ -35,7 +35,6 @@ class ProgressBar:
             bars += ">"
 
         return f"[{bars:70s}]  {pct:4.0%}  {progress:8d} / {self.end:8d}"
-
 
 
 def _get_api_request(url):
