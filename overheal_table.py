@@ -5,37 +5,13 @@ By: Filip Gokstorp (Saintis), 2020
 """
 import numpy as np
 
-from readers import read_from_raw as raw
+from readers import read_heals
+from backend.parser import OverhealParser
+from backend import group_processed_lines
 import spell_data as sd
 
 
-def group_processed_lines(processed_lines, ignore_crit, spell_id=None):
-    """
-    Groups processed lines by spell id.
-
-    Returns a list, with spell id, spell name, and list of heal, overheal
-    """
-
-    id_dict = dict()
-
-    filter_spell_id = spell_id
-
-    for time_stamp, source, spell_id, target, total_heal, overheal, is_crit in processed_lines:
-        if ignore_crit and is_crit:
-            continue
-
-        if filter_spell_id and spell_id != filter_spell_id:
-            continue
-
-        if spell_id not in id_dict:
-            id_dict[spell_id] = []
-
-        id_dict[spell_id].append((total_heal, overheal, is_crit))
-
-    return id_dict
-
-
-def print_spell_aggregate(id, name, data):
+def print_spell_aggregate(spell_id, name, data):
     """Prints aggregate information for single spell."""
     heals, any_overheals, half_overheals, full_overheals, amount_healed, amount_overhealed = (
         data
@@ -43,7 +19,7 @@ def print_spell_aggregate(id, name, data):
     under_heals = heals - any_overheals
 
     print(
-        f"{id:>5s}  {name:28s}  {heals:3.0f}"
+        f"{spell_id:>5s}  {name:28s}  {heals:3.0f}"
         f"  {under_heals / heals:7.1%}"
         f"  {any_overheals / heals:7.1%}"
         f"  {half_overheals / heals:7.1%}"
@@ -128,9 +104,8 @@ def display_lines(total_data, data_list, group):
     print_spell_aggregate("", group_name, total_data)
 
 
-def process_log(player_name, log_file, ignore_crit=False, **kwargs):
-    log_lines = raw.get_lines(log_file)
-    heal_lines, periodic_lines = raw.get_heals(player_name, log_lines)
+def process_log(player_name, source, ignore_crit=False, **kwargs):
+    heal_lines, periodic_lines = read_heals(player_name, source, **kwargs)
 
     # Group lines
     heal_lines = group_processed_lines(heal_lines, ignore_crit)
@@ -147,7 +122,7 @@ def process_log(player_name, log_file, ignore_crit=False, **kwargs):
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(
+    parser = OverhealParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
 Analyses logs and count up number of overheals. Returns a list of spells and the number of recorded heals, as well as overheal frequencies.
@@ -159,14 +134,14 @@ Header explaination:
     Half OH: Percentage of heals that overhealed for at least 50% of the heal value.
     Full OH: Percentage of heals that overhealed for at least 90% of the heal value.
     % OHd: Percentage of heal values that were overheal, same overheal percentage shown in WarcraftLogs. """,
+        need_player=True,
+
     )
 
-    parser.add_argument("player_name", help="Player name to analyse overheal for")
-    parser.add_argument("log_file", help="Path to the log file to analyse")
     parser.add_argument(
         "--ignore_crit", action="store_true", help="Remove critical heals from analysis"
     )
 
     args = parser.parse_args()
 
-    process_log(args.player_name, args.log_file, ignore_crit=args.ignore_crit)
+    process_log(**vars(args))
