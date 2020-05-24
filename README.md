@@ -10,7 +10,7 @@ Two scripts look at the same data and process it similarly.
 `overheal_plot.py` shows how the total healing and overhealing would change if the heal power was reduced.
 
 # Usage
-Requires `python3`, `numpy`, `requests`, `json`, and `matplotlib`.
+Requires `python3`. Also requires the following python packages: `numpy`, `requests`, and `matplotlib` (best installed with `pip`).
 
 Run either scripts with:
 ```
