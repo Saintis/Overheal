@@ -46,8 +46,9 @@ def _get_api_request(url):
     req = requests.get(url)
 
     if not req.status_code == 200:
-        print("Error getting an API request:")
-        print(req.text)
+        print("Error getting API request:", url)
+        print("Status code:", req.status_code)
+        print("Error:", req.text)
         exit(200)
 
     data = None
@@ -165,7 +166,7 @@ def _get_heals(code, start=0, end=None, names=None, for_player=None):
                 print("Exception while handling line", e)
                 print(ex)
 
-    print(progress_bar.render(end))
+    print(progress_bar.render(end - start))
 
     return heals, periodics, absorbs
 
