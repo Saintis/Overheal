@@ -5,9 +5,10 @@ By: Filip Gokstorp (Saintis), 2020
 """
 import numpy as np
 
-from readers import read_from_raw as raw
+from readers import read_heals
+from backend import group_processed_lines
+
 import spell_data as sd
-from overheal_table import group_processed_lines
 
 
 def filter_out_reduced_healing(raw_heals):
@@ -68,15 +69,14 @@ def process_spell(spell_id, spell_lines, heal_increase=0.0):
 
 
 def estimate_spell_power(
-    player_name,
-    log_file,
+    player,
+    source,
     spell_id=None,
     spiritual_healing=0,
     improved_renew=0,
     **kwargs,
 ):
-    log_lines = raw.get_lines(log_file)
-    heal_lines, periodic_lines = raw.get_heals(player_name, log_lines)
+    heal_lines, periodic_lines, _ = read_heals(player, source, spell_id=spell_id, **kwargs)
 
     # Group lines
     heal_lines = group_processed_lines(heal_lines, False, spell_id=spell_id)
@@ -90,7 +90,6 @@ def estimate_spell_power(
         # only one will be populated
         lines = heal_lines + periodic_lines
         process_spell(spell_id, lines[spell_id])
-        # process_spell(spell_id, periodic_lines[spell_id])
     else:
         spell_inc = 0.02 * spiritual_healing
 
@@ -114,15 +113,14 @@ def estimate_spell_power(
 
 
 if __name__ == "__main__":
-    import argparse
+    from backend.parser import OverhealParser
 
-    parser = argparse.ArgumentParser(
+    parser = OverhealParser(
         description="Analyses logs and and estimates spell power and crit chance.",
+        need_player=True,
+        accept_spell_id=True,
     )
 
-    parser.add_argument("player_name", help="Player name to analyse overheal for")
-    parser.add_argument("log_file", help="Path to the log file to analyse, or url to WCL page to scrape for data.")
-    parser.add_argument("--spell_id", type=str, help="Spell id to filter for")
     parser.add_argument(
         "--sh", type=int, help="Levels of Spirital Healing to guess", default=0
     )
@@ -133,9 +131,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     estimate_spell_power(
-        args.player_name,
-        args.log_file,
-        args.spell_id,
-        spiritual_healing=args.sh,
-        improved_renew=args.ir,
+        **vars(args)
     )

@@ -6,9 +6,9 @@ By: Filip Gokstorp (Saintis), 2020
 import numpy as np
 import matplotlib.pyplot as plt
 
-from readers import read_from_raw as raw
+from readers import read_heals
+from backend import group_processed_lines
 import spell_data as sd
-from overheal_table import group_processed_lines
 
 
 def process_spell(spell_id, spell_lines, spell_power):
@@ -44,9 +44,9 @@ def process_spell(spell_id, spell_lines, spell_power):
     return n_heal, n_underheal, n_overheal, n_downrank, n_drop_h
 
 
-def main(player_name, log_file, spell_power):
-    log_lines = raw.get_lines(log_file)
-    heal_lines, periodic_lines = raw.get_heals(player_name, log_lines)
+def main(player_name, source, spell_power):
+    # log_lines = raw.get_lines(log_file)
+    heal_lines, periodic_lines, _ = read_heals(player_name, source)
 
     # Group lines
     heal_lines = group_processed_lines(heal_lines, False)

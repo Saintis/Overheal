@@ -6,9 +6,11 @@ By: Filip Gokstorp (Saintis), 2020
 import numpy as np
 import matplotlib.pyplot as plt
 
-from readers import read_from_raw as raw
+from readers import read_heals
+from backend import group_processed_lines
+from backend.parser import OverhealParser
+
 import spell_data as sd
-from overheal_table import group_processed_lines
 
 
 def process_spell(player_name, spell_id, spell_lines, spell_power=None, show=True):
@@ -66,9 +68,8 @@ def process_spell(player_name, spell_id, spell_lines, spell_power=None, show=Tru
         plt.show()
 
 
-def overheal_cdf(player_name, log_file, spell_id=None, **kwargs):
-    log_lines = raw.get_lines(log_file)
-    heal_lines, periodic_lines = raw.get_heals(player_name, log_lines)
+def overheal_cdf(player, source, spell_id=None, **kwargs):
+    heal_lines, periodic_lines, absorbs = read_heals(player, source, **kwargs)
 
     # Group lines
     heal_lines = group_processed_lines(heal_lines, False, spell_id=spell_id)
@@ -85,40 +86,27 @@ def overheal_cdf(player_name, log_file, spell_id=None, **kwargs):
             print(f"Could not find casts of spell [{spell_id}]")
             exit(1)
 
-        process_spell(player_name, spell_id, lines, **kwargs)
+        process_spell(player, spell_id, lines, **kwargs)
     else:
         for spell_id, lines in heal_lines.items():
-            process_spell(player_name, spell_id, lines, show=False, **kwargs)
+            process_spell(player, spell_id, lines, show=False, **kwargs)
         for spell_id, lines in periodic_lines.items():
-            process_spell(player_name, spell_id, lines, show=False, **kwargs)
+            process_spell(player, spell_id, lines, show=False, **kwargs)
 
 
 if __name__ == "__main__":
     import os
-    import argparse
 
     # make sure directories exist
     os.makedirs("figs/cdf", exist_ok=True)
 
-    parser = argparse.ArgumentParser(
+    parser = OverhealParser(
         description="Analyses logs and gives overheal cdf.",
-    )
-
-    parser.add_argument("player_name", help="Player name to analyse overheal for")
-    parser.add_argument("log_file", help="Path to the log file to analyse")
-    parser.add_argument("--spell_id", type=str, help="Spell id to filter for")
-    parser.add_argument(
-        "-p",
-        "--spell_power",
-        type=int,
-        help="Spell power for base heal fraction calculation",
+        need_player=True,
+        accept_spell_id=True,
+        accept_spell_power=True
     )
 
     args = parser.parse_args()
 
-    overheal_cdf(
-        args.player_name,
-        args.log_file,
-        spell_id=args.spell_id,
-        spell_power=args.spell_power,
-    )
+    overheal_cdf(**vars(args))

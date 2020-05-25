@@ -8,8 +8,9 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from readers import read_from_raw as raw
-import overheal_table as ot
+from readers import read_heals
+from backend import group_processed_lines
+
 import spell_data as sd
 
 
@@ -191,13 +192,12 @@ def group_lines_for_spell(spell_id, lines, spell_powers):
 
 
 def main(
-    player_name, log_file, ignore_crit=False, spell_id=None, spell_power=None, **kwargs
+    player_name, source, ignore_crit=False, spell_id=None, spell_power=None, **kwargs
 ):
-    log_lines = raw.get_lines(log_file)
-    heal_lines, periodic_lines = raw.get_heals(player_name, log_lines)
+    heal_lines, periodic_lines, absorbs = read_heals(player_name, source, spell_id=spell_id, **kwargs)
 
     # Group lines
-    heal_lines = ot.group_processed_lines(
+    heal_lines = group_processed_lines(
         heal_lines, ignore_crit, spell_id=spell_id
     )
 
@@ -222,8 +222,9 @@ def main(
 
 if __name__ == "__main__":
     import argparse
+    from backend.parser import OverhealParser
 
-    parser = argparse.ArgumentParser(
+    parser = OverhealParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
 Analyses logs and count up number of overheals. Returns a list of spells and the number of recorded heals, as well as overheal frequencies.
@@ -235,27 +236,15 @@ Header explaination:
     Half OH: Percentage of heals that overhealed for at least 50% of the heal value.
     Full OH: Percentage of heals that overhealed for at least 90% of the heal value.
     % OHd: Percentage of heal values that were overheal, same overheal percentage shown in WarcraftLogs. """,
+        need_player=True,
+        accept_spell_id=True,
+        accept_spell_power=True
     )
 
-    parser.add_argument("player_name", help="Player name to analyse overheal for")
-    parser.add_argument("log_file", help="Path to the log file to analyse")
     parser.add_argument(
         "--ignore_crit", action="store_true", help="Remove critical heals from analysis"
-    )
-    parser.add_argument("--spell_id", type=str, help="Spell id to filter for")
-    parser.add_argument(
-        "-p",
-        "--spell_power",
-        type=int,
-        help="Spell power range to look at",
     )
 
     args = parser.parse_args()
 
-    main(
-        args.player_name,
-        args.log_file,
-        ignore_crit=args.ignore_crit,
-        spell_power=args.spell_power,
-        spell_id=args.spell_id,
-    )
+    main(**vars(args))

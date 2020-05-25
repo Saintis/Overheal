@@ -3,12 +3,10 @@ Script that estimates value of 1% crit.
 
 By: Filip Gokstorp (Saintis), 2020
 """
-from readers import (
-    read_from_raw as raw,
-    read_from_api as api
-)
+from readers import read_heals
+from backend import group_processed_lines
+
 import spell_data as sd
-from overheal_table import group_processed_lines
 
 
 def process_spell(spell_id, spell_lines):
@@ -127,17 +125,8 @@ def print_results(data):
     print(message)
 
 
-def main(args):
-    player_name = args.player_name
-    log_file = args.log_file
-    spell_id = args.spell_id
-
-    if args.report:
-        # use a link to a WCL report instead
-        heal_lines, _, _ = api.get_heals(args.report, name=player_name, start=args.start, end=args.end)
-    else:
-        log_lines = raw.get_lines(log_file)
-        heal_lines, _ = raw.get_heals(player_name, log_lines)
+def main(player, source, spell_id=None, **kwargs):
+    heal_lines, _, _ = read_heals(player, source, **kwargs)
 
     # Group lines
     heal_lines = group_processed_lines(heal_lines, False, spell_id=spell_id)
@@ -163,24 +152,19 @@ def main(args):
 
 if __name__ == "__main__":
     import os
-    import argparse
+    from backend.parser import OverhealParser
 
     # make sure directories exist
     os.makedirs("figs/crit", exist_ok=True)
 
-    parser = argparse.ArgumentParser(
+    parser = OverhealParser(
         description="Analyses log and estimates healing of crits. Counts up the healing and overhealing done by each "
-        "found crit. Prints out extra healing done by each crit on average and the equivalent +heal worth "
-        "for each spell, and for the average spell profile over the whole combat log."
+                    "found crit. Prints out extra healing done by each crit on average and the equivalent +heal worth "
+                    "for each spell, and for the average spell profile over the whole combat log.",
+        need_player=True,
+        accept_spell_id=True,
     )
-
-    parser.add_argument("player_name", help="Player name to analyse overheal for")
-    parser.add_argument("log_file", nargs="?", help="Path to the log file to analyse")
-    parser.add_argument("--spell_id", help="Spell id to filter for")
-    parser.add_argument("-r", "--report", help="Warcraft Logs report code to get heals for.")
-    parser.add_argument("--start", type=int, help="Start of fight to look at. Only works with WCL code.")
-    parser.add_argument("--end", type=int, help="End of fight to look at. Only works with WCL code.")
 
     args = parser.parse_args()
 
-    main(args)
+    main(**vars(args))

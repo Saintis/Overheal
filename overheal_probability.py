@@ -6,8 +6,9 @@ By: Filip Gokstorp (Saintis), 2020
 import numpy as np
 import matplotlib.pyplot as plt
 
-import overheal_table as ot
-from readers import read_from_raw as raw
+from readers import read_heals
+from backend import group_processed_lines
+
 import spell_data as sd
 
 
@@ -153,52 +154,34 @@ def spell_overheal_probability(player_name, spell_id, lines, spell_power=None):
 
 
 def main(
-    player_name, log_file, spell_power=500, ignore_crit=False, spell_id=None, **kwargs
+    player, source, spell_power=500, ignore_crit=False, spell_id=None, **kwargs
 ):
-    log_lines = raw.get_lines(log_file)
-    heal_lines, _ = raw.get_heals(player_name, log_lines)
+    heal_lines, periodics, absorbs = read_heals(player, source, **kwargs)
 
     # Group lines
-    heal_lines = ot.group_processed_lines(heal_lines, ignore_crit, spell_id=spell_id)
+    heal_lines = group_processed_lines(heal_lines, ignore_crit, spell_id=spell_id)
     for spell_id, lines in heal_lines.items():
-        spell_overheal_probability(player_name, spell_id, lines, spell_power)
+        spell_overheal_probability(player, spell_id, lines, spell_power)
 
 
 if __name__ == "__main__":
-    import os
-    import argparse
+    from backend.parser import OverhealParser
 
     # Make plot dirs
+    import os
     os.makedirs("figs/probability/likelihood", exist_ok=True)
 
-    parser = argparse.ArgumentParser(
+    parser = OverhealParser(
         description="""Plots probability of overheals for different spells.""",
+        need_player=True,
+        accept_spell_id=True,
+        accept_spell_power=True,
     )
 
-    parser.add_argument("player_name", help="Player name to analyse overheal for")
-    parser.add_argument("log_file", help="Path to the log file to analyse")
     parser.add_argument(
         "--ignore_crit", action="store_true", help="Remove critical heals from analysis"
-    )
-    parser.add_argument(
-        "--spell_id",
-        type=str,
-        help="Spell id to print figure for. If None, prints for all found spells",
-    )
-    parser.add_argument(
-        "-p",
-        "--spell_power",
-        type=int,
-        help="Character spell power. If None, only look at spell power change relative to current amount",
-        default=None,
     )
 
     args = parser.parse_args()
 
-    main(
-        args.player_name,
-        args.log_file,
-        spell_power=args.spell_power,
-        ignore_crit=args.ignore_crit,
-        spell_id=args.spell_id,
-    )
+    main(**vars(args))

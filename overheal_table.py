@@ -34,13 +34,13 @@ def aggregate_lines(grouped_lines, spell_power=0.0):
     total_data = np.zeros(6)
     data_list = []
 
-    for id, spell_data in grouped_lines.items():
+    for spell_id, spell_data in grouped_lines.items():
         # heals, any OH, half OH, full OH, aH, aOH
         data = np.zeros(6)
         data[0] = len(spell_data)
 
         # Fail more gracefully if we are missing a coefficient
-        coefficient = sd.spell_coefficient(id)
+        coefficient = sd.spell_coefficient(spell_id)
 
         for h, oh, crit in spell_data:
             dh = coefficient * spell_power
@@ -77,7 +77,7 @@ def aggregate_lines(grouped_lines, spell_power=0.0):
             data[4] += h
             data[5] += oh
 
-        data_list.append((id, data))
+        data_list.append((spell_id, data))
         total_data += data
 
     return total_data, data_list
@@ -89,7 +89,8 @@ def display_lines(total_data, data_list, group):
         return
 
     print(
-        f"{'id':>5s}  {group + ' name':28s}  {'#H':>3s}  {'No OH':>7s}  {'Any OH':>7s}  {'Half OH':>7s}  {'Full OH':>7s}  {'% OHd':>7s}"
+        f"{'id':>5s}  {group + ' name':28s}  {'#H':>3s}  {'No OH':>7s}  {'Any OH':>7s}  {'Half OH':>7s}"
+        f"  {'Full OH':>7s}  {'% OHd':>7s}"
     )
 
     for spell_id, data in data_list:
@@ -105,7 +106,7 @@ def display_lines(total_data, data_list, group):
 
 
 def process_log(player_name, source, ignore_crit=False, **kwargs):
-    heal_lines, periodic_lines = read_heals(player_name, source, **kwargs)
+    heal_lines, periodic_lines, _ = read_heals(player_name, source, **kwargs)
 
     # Group lines
     heal_lines = group_processed_lines(heal_lines, ignore_crit)
