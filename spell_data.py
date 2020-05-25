@@ -45,6 +45,7 @@ SPELL_NAMES = {
     "19243": "Desperate Prayer (Rank 7)",
 
     "10901": "Power Word: Shield (Rank 10)",
+    "10899": "Power Word: Shiled (Rank 8)",
 
     # Other misc spells
     "10942": "Fade (Rank 6)",
@@ -97,6 +98,8 @@ SPELL_NAMES = {
     "8008": "Lesser Healing Wave (Rank 2)",
 
     "10396": "Healing Wave (Rank 9)",
+    "8005": "Healing Wave (Rank 7)",
+    "959": "Healing Wave (Rank 6)",
     "939": "Healing Wave (Rank 5)",
     "331": "Healing Wave (Rank 1)",
 
@@ -224,7 +227,7 @@ SPELL_HEALS = {
     "10961": 965.0,
     # "10960": 0.0,
     # "996": 0.0,
-    # "596": 0.0,
+    "596": (333 + 312) / 2,
 
     # Greater Heal
     "25314": 2080.0,
@@ -327,13 +330,22 @@ SPELL_MANA = {
 }
 
 # fmt: on
+warning_list = dict(
+    name=[],
+    coef=[],
+    heal=[],
+    mana=[],
+)
 
 
 def spell_name(spell_id):
     if spell_id in SPELL_NAMES:
         return SPELL_NAMES[spell_id]
 
-    print(f"Unknown name for spell {spell_id}")
+    if spell_id not in warning_list["name"]:
+        print(f"Unknown name for spell {spell_id}, https://classic.wowhead.com/spell={spell_id}")
+        warning_list["name"].append(spell_id)
+
     return f"[Spell {spell_id}]"
 
 
@@ -341,7 +353,10 @@ def spell_coefficient(spell_id):
     if spell_id in SPELL_COEFFICIENTS:
         return SPELL_COEFFICIENTS[spell_id]
 
-    print(f"Unknown coefficient for spell {spell_id}")
+    if spell_id not in warning_list["coef"]:
+        print(f"Unknown coefficient for spell {spell_id}, https://classic.wowhead.com/spell={spell_id}")
+        warning_list["coef"].append(spell_id)
+
     return 0.0
 
 
@@ -349,7 +364,10 @@ def spell_heal(spell_id):
     if spell_id in SPELL_HEALS:
         return SPELL_HEALS[spell_id]
 
-    print(f"Unknown base heal for spell {spell_id}")
+    if spell_id not in warning_list["heal"]:
+        print(f"Unknown base heal for spell {spell_id}, https://classic.wowhead.com/spell={spell_id}")
+        warning_list["heal"].append(spell_id)
+
     return 0.0
 
 
@@ -357,5 +375,8 @@ def spell_mana(spell_id):
     if spell_id in SPELL_MANA:
         return SPELL_MANA[spell_id]
 
-    print(f"Unknown mana cost for spell {spell_id}")
+    if spell_id not in warning_list["mana"]:
+        print(f"Unknown mana cost for spell {spell_id}, https://classic.wowhead.com/spell={spell_id}")
+        warning_list["mana"].append(spell_id)
+
     return 0.0
