@@ -338,44 +338,44 @@ warning_list = dict(
 )
 
 
-def spell_name(spell_id):
+def spell_name(spell_id, warn_on_not_found=True):
     if spell_id in SPELL_NAMES:
         return SPELL_NAMES[spell_id]
 
-    if spell_id not in warning_list["name"]:
+    if warn_on_not_found and spell_id not in warning_list["name"]:
         print(f"Unknown name for spell {spell_id}, https://classic.wowhead.com/spell={spell_id}")
         warning_list["name"].append(spell_id)
 
     return f"[Spell {spell_id}]"
 
 
-def spell_coefficient(spell_id):
+def spell_coefficient(spell_id, warn_on_not_found=True):
     if spell_id in SPELL_COEFFICIENTS:
         return SPELL_COEFFICIENTS[spell_id]
 
-    if spell_id not in warning_list["coef"]:
+    if warn_on_not_found and spell_id not in warning_list["coef"]:
         print(f"Unknown coefficient for spell {spell_id}, https://classic.wowhead.com/spell={spell_id}")
         warning_list["coef"].append(spell_id)
 
     return 0.0
 
 
-def spell_heal(spell_id):
+def spell_heal(spell_id, warn_on_not_found=True):
     if spell_id in SPELL_HEALS:
         return SPELL_HEALS[spell_id]
 
-    if spell_id not in warning_list["heal"]:
+    if warn_on_not_found and spell_id not in warning_list["heal"]:
         print(f"Unknown base heal for spell {spell_id}, https://classic.wowhead.com/spell={spell_id}")
         warning_list["heal"].append(spell_id)
 
     return 0.0
 
 
-def spell_mana(spell_id):
+def spell_mana(spell_id, warn_on_not_found=True):
     if spell_id in SPELL_MANA:
         return SPELL_MANA[spell_id]
 
-    if spell_id not in warning_list["mana"]:
+    if warn_on_not_found and spell_id not in warning_list["mana"]:
         print(f"Unknown mana cost for spell {spell_id}, https://classic.wowhead.com/spell={spell_id}")
         warning_list["mana"].append(spell_id)
 

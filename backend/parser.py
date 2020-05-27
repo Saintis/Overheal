@@ -9,7 +9,7 @@ import argparse
 class OverhealParser(argparse.ArgumentParser):
     """Default setup for an arg parser for Overheal scripts."""
 
-    def __init__(self, *, need_player=True, accept_spell_id=True, accept_spell_power=False, **kwargs):
+    def __init__(self, *, need_player=False, accept_spell_id=False, accept_spell_power=False, **kwargs):
         super().__init__(**kwargs)
 
         self.add_argument(
