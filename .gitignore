@@ -1,0 +1,6 @@
+# Ignore figure output
+figs/
+# Ignore log-files
+*.txt
+# Ignores raid composition file
+raid.json
