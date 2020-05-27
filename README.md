@@ -18,11 +18,11 @@ Requires `python3`. Also requires the following python packages: `numpy`, `reque
 
 Run either scripts with:
 ```
-python3 overheal_plot.py [player name] [data source]
+python3 overheal_plot.py [data source] [player name]
 ```
 e.g.
 ```
-python3 overheal_plot.py Saintis WoWCombatLog.txt
+python3 overheal_plot.py WoWCombatLog.txt Saintis
 ```
 
 (if `python3` gives an error you can try `python`, otherwise look up how to run a python script on your machine)
@@ -39,7 +39,7 @@ To get this working you need to get your api key from the WCL website. Make sure
 
 If you want to read from WCL, just pass in the full link to the combat report. For example
 ```
-python3 overheal_crit.py Saintis https://classic.warcraftlogs.com/reports/1KQrVMkXaYB29L7H
+python3 overheal_crit.py https://classic.warcraftlogs.com/reports/1KQrVMkXaYB29L7H Saintis
 ```
 
 All `overheal_` scripts should accept a warcraft log link. The `analyse_` scripts require the WoWCombatLog.txt file produced by the client.
