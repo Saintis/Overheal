@@ -3,18 +3,22 @@
 
 Overheal analysis of WoW Classic combatlogs.
 
-Two scripts look at the same data and process it similarly.
+There are now quite a few scripts that do slightly differnt things, below are some that might be of interest.
 
 `overheal_table.py` outputs a list of spells used, and overheal frequency.
 
 `overheal_plot.py` shows how the total healing and overhealing would change if the heal power was reduced.
+
+`overheal_crit.py` shows how much extra healing 1% of crit gives you. Also relates it to an equivalent amount of +healing.
+
+`overheal_probability.py` generates plots of the probability of each spell to overheal as your +heal would change.
 
 # Usage
 Requires `python3`. Also requires the following python packages: `numpy`, `requests`, and `matplotlib` (best installed with `pip`).
 
 Run either scripts with:
 ```
-python3 overheal_plot.py [player_name] [log_file]
+python3 overheal_plot.py [player name] [data source]
 ```
 e.g.
 ```
@@ -33,11 +37,12 @@ Some scripts can use data from a Warcraft Logs report instead of a raw combat lo
 
 To get this working you need to get your api key from the WCL website. Make sure you have an account and look for it at the bottom of your profile page, [here](https://classic.warcraftlogs.com/profile). Save that api key to a text file called `apikey.txt` in the same folder you downloaded the scripts to and it should work.
 
-You tell the script to read in a WCL with the option `-r`. For example
+If you want to read from WCL, just pass in the full link to the combat report. For example
 ```
-python3 overheal_crit.py [player_name] -r [report code]
+python3 overheal_crit.py Saintis https://classic.warcraftlogs.com/reports/1KQrVMkXaYB29L7H
 ```
-You can find your `[report code]` in the WCL url after `report/`.
+
+All `overheal_` scripts should accept a warcraft log link. The `analyse_` scripts require the WoWCombatLog.txt file produced by the client.
 
 ## Data for a single spell
 
