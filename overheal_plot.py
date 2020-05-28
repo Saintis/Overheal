@@ -14,7 +14,7 @@ from backend import group_processed_lines
 import spell_data as sd
 
 
-def plot_overheal(player_name, spell_powers, spell_id, data, sp_shift=0, sp_extrap=200):
+def plot_overheal(player, spell_powers, spell_id, data, sp_shift=0, sp_extrap=200):
     os.makedirs("figs/overheal", exist_ok=True)
 
     sp = spell_powers + sp_shift
@@ -36,7 +36,7 @@ def plot_overheal(player_name, spell_powers, spell_id, data, sp_shift=0, sp_extr
     plt.legend()
     plt.tight_layout()
 
-    fig_name = f"{player_name}_heal"
+    fig_name = f"{player}_heal"
     if spell_id:
         fig_name += "_" + spell_id
 
@@ -90,7 +90,7 @@ def plot_overheal(player_name, spell_powers, spell_id, data, sp_shift=0, sp_extr
     ax2.grid()
     ax2.legend()
 
-    fig_name = f"{player_name}_overheal"
+    fig_name = f"{player}_overheal"
     if spell_id:
         fig_name += "_" + spell_id
 
@@ -192,9 +192,9 @@ def group_lines_for_spell(spell_id, lines, spell_powers):
 
 
 def main(
-    player_name, source, ignore_crit=False, spell_id=None, spell_power=None, **kwargs
+    player, source, ignore_crit=False, spell_id=None, spell_power=None, **kwargs
 ):
-    heal_lines, periodic_lines, absorbs = read_heals(player_name, source, spell_id=spell_id, **kwargs)
+    heal_lines, periodic_lines, absorbs = read_heals(player, source, spell_id=spell_id, **kwargs)
 
     # Group lines
     heal_lines = group_processed_lines(
@@ -213,11 +213,11 @@ def main(
         if sp_extrap < 0:
             sp_extrap = 1500.0 - spell_power
 
-    spell_powers = np.linspace(0, -sp_neg, int(sp_neg / 1) + 1)
+    spell_powers = np.linspace(0, -sp_neg, int(sp_neg) + 1)
 
     for spell_id, lines in heal_lines.items():
         out = group_lines_for_spell(spell_id, lines, spell_powers)
-        plot_overheal(player_name, spell_powers, spell_id, out, sp_shift=sp_shift, sp_extrap=sp_extrap)
+        plot_overheal(player, spell_powers, spell_id, out, sp_shift=sp_shift, sp_extrap=sp_extrap)
 
 
 if __name__ == "__main__":
