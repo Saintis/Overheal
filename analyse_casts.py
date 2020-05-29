@@ -165,19 +165,7 @@ def get_casts(log_lines):
     return cast_list, full_heal_data
 
 
-def plot_casts(casts, encounter=None, start=None, end=None, mark=None, anonymize=True):
-    casts_dict = dict()
-
-    for c in casts:
-        s = c[0]
-        if s not in HEALERS:
-            continue
-
-        if s not in casts_dict:
-            casts_dict[s] = []
-
-        casts_dict[s].append(c)
-
+def plot_casts(casts_dict, encounter=None, start=None, end=None, mark=None, anonymize=True):
     casts = list(casts_dict.values())
     labels = list(casts_dict.keys())
     most_casts = max((len(c) for c in casts))
@@ -283,6 +271,45 @@ def plot_casts(casts, encounter=None, start=None, end=None, mark=None, anonymize
     print(f"Saved casts figure to `{fig_path}`")
 
 
+def analyse_activity(casts_dict, encounter, encounter_start, encounter_end):
+    """Analyses casting activity for each healer."""
+
+    combat_time = (encounter_end - encounter_start).total_seconds()
+    print(f"Activity for {encounter}, {combat_time:.1f}s")
+
+    for healer in HEALERS:
+        end = encounter_start
+
+        if healer not in casts_dict:
+            continue
+
+        casts = casts_dict[healer]
+        first_cast = casts[0]
+        setup_time = (first_cast[1] - end).total_seconds()
+        inactive_time = setup_time
+
+        for c in casts[1:]:
+            source, cast_start, cast_end, spell_id, target = c
+
+            if cast_start < end:
+                end = cast_end
+                continue
+
+            inactive_time += (cast_start - end).total_seconds()
+
+            if cast_end == cast_start:
+                end = cast_end + timedelta(seconds=1.5)
+            else:
+                end = cast_end
+
+        if end < encounter_end:
+            inactive_time += (encounter_end - end).total_seconds()
+
+        active_time = combat_time - inactive_time
+        active_pct = active_time / combat_time
+        print(f"  {healer + ':':<13s} {setup_time:4.1f}s  {active_time:5.1f}s  ({active_pct:4.1%}),  {inactive_time:5.1f}s inactivity")
+
+
 def main(source, encounter=None, **kwargs):
     encounter_i = encounter
 
@@ -303,7 +330,20 @@ def main(source, encounter=None, **kwargs):
 
     casts, heals = get_casts(encounter_lines)
 
-    plot_casts(casts, encounter, start=encounter_start, end=encounter_end, **kwargs)
+    casts_dict = dict()
+
+    for c in casts:
+        s = c[0]
+        if s not in HEALERS:
+            continue
+
+        if s not in casts_dict:
+            casts_dict[s] = []
+
+        casts_dict[s].append(c)
+
+    plot_casts(casts_dict, encounter, start=encounter_start, end=encounter_end, **kwargs)
+    analyse_activity(casts_dict, encounter, encounter_start, encounter_end)
 
 
 if __name__ == "__main__":
