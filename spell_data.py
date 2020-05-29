@@ -80,10 +80,20 @@ SPELL_NAMES = {
     "475": "Remove Lesser Curse",
 
     # Druid
+    "9889": "Healing Touch (Rank 10)",
+    "9841": "Rejuvenation (Rank 10)",
+    "9858": "Regrowth (Rank 9)",
+
+    "17116": "Nature's Swiftness",
+    "18562": "Swiftmend",
+    "29166": "Innervate",
+
     "21850": "Gift of the Wild (Rank 2)",
     "9885": "Mark of the Wild (Rank 7)",
 
     "20748": "Rebirth (Rank 5)",
+
+    "9907": "Faerie Fire (Rank 4)",
 
     "8946": "Cure Poison",
     "2893": "Abolish Poison",
