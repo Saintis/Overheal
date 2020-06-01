@@ -105,8 +105,8 @@ def display_lines(total_data, data_list, group):
     print_spell_aggregate("", group_name, total_data)
 
 
-def process_log(player_name, source, ignore_crit=False, **kwargs):
-    heal_lines, periodic_lines, _ = read_heals(player_name, source, **kwargs)
+def process_log(player, source, ignore_crit=False, **kwargs):
+    heal_lines, periodic_lines, _ = read_heals(player, source, **kwargs)
 
     # Group lines
     heal_lines = group_processed_lines(heal_lines, ignore_crit)

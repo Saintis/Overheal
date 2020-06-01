@@ -127,3 +127,19 @@ def lines_for_encounter(log, encounter):
     t_end = datetime.strptime(str_end, STR_P_TIME)
 
     return encounter_lines, t_start, t_end
+
+
+def encounter_picker(log, encounter_i=None):
+    """Picks the encounter to look at"""
+
+    encounters = list_encounters(log)
+
+    if encounter_i == 0:
+        encounter = None
+    elif encounter_i:
+        encounter = encounters[encounter_i - 1]
+    else:
+        encounter = select_encounter(encounters)
+
+    encounter_lines, encounter_start, encounter_end = lines_for_encounter(log, encounter)
+    return encounter, encounter_lines, encounter_start, encounter_end

@@ -38,6 +38,7 @@ SPELL_NAMES = {
     "23455": "Holy Nova (Rank 1)",
 
     "10929": "Renew (Rank 9)",
+    "6078": "Renew (Rank 6)",
     "6077": "Renew (Rank 5)",
     "6075": "Renew (Rank 3)",
     "139": "Renew (Rank 1)",
@@ -139,6 +140,9 @@ SPELL_NAMES = {
 # These do not cost mana so will not trigger 5sr, or BD (presumably)
 SPELL_IGNORE = [
     "24354",  # Blessed Prayer Beads
+    "23477",  # 1440 Health Stone
+    "23394",  # Shadow of Ebonroc
+    "18610",  # First Aid (Heavy Runecloth)
     "17531",  # Major Mana Potion
     "17291",  # Stratholme Holy Water
     "16666",  # Demonic Rune
@@ -207,6 +211,7 @@ SPELL_COEFFICIENTS = {
 
     # Renew
     "10929": 1.0 / 5,
+    "6078": 1.0 / 5,
     "6077": 1.0 / 5,
     "6075": 1.0 / 5,
     "139": 0.55 / 5,
@@ -261,6 +266,7 @@ SPELL_HEALS = {
 
     # Renew
     "10929": 810 / 5,
+    "6078": 400 / 5,
     "6077": 315 / 5,
     "6075": 175 / 5,
     "139": 45 / 5,
@@ -305,6 +311,7 @@ SPELL_MANA = {
     # "23455": "Holy Nova (Rank 1)",
 
     "10929": 365.0,
+    "6078": 205.0,
     "6077": 170.0,
     "6075": 105.0,
     "139": 30.0,
@@ -381,12 +388,30 @@ def spell_heal(spell_id, warn_on_not_found=True):
     return 0.0
 
 
-def spell_mana(spell_id, warn_on_not_found=True):
-    if spell_id in SPELL_MANA:
-        return SPELL_MANA[spell_id]
+def spell_mana(spell_id, talents=None, warn_on_not_found=True):
+    if spell_id not in SPELL_MANA:
+        if warn_on_not_found and spell_id not in warning_list["mana"]:
+            print(f"Unknown mana cost for spell {spell_id}, https://classic.wowhead.com/spell={spell_id}")
+            warning_list["mana"].append(spell_id)
 
-    if warn_on_not_found and spell_id not in warning_list["mana"]:
-        print(f"Unknown mana cost for spell {spell_id}, https://classic.wowhead.com/spell={spell_id}")
-        warning_list["mana"].append(spell_id)
+        return 0.0
 
-    return 0.0
+    mana = SPELL_MANA[spell_id]
+    name = spell_name(spell_id)
+    name_without_rank = name.split("(")[0].strip()
+
+    if "Improved Healing" in talents:
+        if name_without_rank in ("Heal", "Greater Heal", "Lesser Heal"):
+            # LH, H and GH reduced by 5% per talent
+            mana -= mana * 0.05 * talents["Improved Healing"]
+
+    if "Mental Agility" in talents:
+        # all instant casts
+        if name_without_rank in ("Power Word: Shield", "Dispel Magic", "Renew", "Power Infusion"):
+            mana -= mana * 0.02 * talents["Mental Agility"]
+
+    if "Improved Prayer of Healing" in talents:
+        if name_without_rank == "Prayer of Healing":
+            mana -= mana * 0.10 * talents["Prayer of Healing"]
+
+    return mana

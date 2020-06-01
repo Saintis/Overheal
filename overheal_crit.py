@@ -74,9 +74,10 @@ def print_results(data):
         t_oh += ohh
 
         crit_pc = n_crits / n_spells
+        crit_pc_str = f"{crit_pc:5.1%}" if crit_pc < 1.0 else "100.%"
 
         message = (
-            f"  {spell_name:<30s}: {n_crits:3d} / {n_spells:3d} crits ({crit_pc:5.1%}); ({ohh / hh:5.1%} OH)"
+            f"  {spell_name:<30s}:{n_crits:4d} /{n_spells:4d} crits ({crit_pc_str}); ({ohh / hh:5.1%} OH)"
         )
 
         if n_crits == 0:
@@ -85,12 +86,13 @@ def print_results(data):
 
         crit_oh = crit_fh - crit_uh
         oh_pc = crit_oh / crit_fh
+        oh_pc_str = f"{oh_pc:5.1%}" if oh_pc < 1.0 else "100.%"
 
         crit_heal = 0.01 * crit_uh
         eq_h_0c = crit_heal / coef
         eq_h = eq_h_0c / (1.0 + 0.5 * crit_pc)
 
-        message += f", Crit H: {crit_fh:4.0f} ({crit_uh:4.0f} + {crit_oh:4.0f} oh)  ({oh_pc:5.1%} oh)"
+        message += f", Crit H: {crit_fh:4.0f} ({crit_uh:4.0f} + {crit_oh:4.0f} oh)  ({oh_pc_str} oh)"
         message += f", 1% crit gives {0.01 * crit_uh:+4.1f} healing eq to {eq_h:+5.1f} h ({eq_h_0c:+5.1f} at 0% crit)."
 
         print(message)
@@ -102,7 +104,7 @@ def print_results(data):
     coef = s_coef / nn_crits
 
     message = (
-        f"  {spell_name:<30s}: {nn_crits:3d} / {nn_spells:3d} crits ({crit_pc:5.1%}); ({t_oh / t_hh:5.1%} OH)"
+        f"  {spell_name:<30s}:{nn_crits:4d} /{nn_spells:4d} crits ({crit_pc:5.1%}); ({t_oh / t_hh:5.1%} OH)"
     )
 
     if nn_crits == 0:
