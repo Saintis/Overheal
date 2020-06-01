@@ -13,9 +13,7 @@ from backend.parser import OverhealParser
 from backend import (
     get_player_name,
     get_time_stamp,
-    list_encounters,
-    select_encounter,
-    lines_for_encounter,
+    encounter_picker
 )
 import spell_data as sd
 
@@ -44,8 +42,29 @@ def anonymize_name(name):
     return hash_obj.hexdigest()[:4]
 
 
+def get_deaths(log_lines):
+    """Gets deaths in log."""
+
+    deaths = []
+    for line in log_lines:
+        line_parts = line.split(",")
+
+        if "UNIT_DIED" not in line_parts[0]:
+            continue
+
+        if "Player" not in line_parts[5]:
+            continue
+
+        timestamp = get_time_stamp(line_parts[0])
+        player = get_player_name(line_parts[6])
+
+        deaths.append((timestamp, player))
+
+    return deaths
+
+
 def get_casts(log_lines):
-    """Looks for sniping in the log lines."""
+    """Gets casts in log."""
 
     cast_list = []
     casts = dict()
@@ -97,8 +116,9 @@ def get_casts(log_lines):
             source = get_player_name(line_parts[2])
             cancel_time = get_time_stamp(line_parts[0])
             spell_id = line_parts[9]
+            reason = line_parts[12].strip('"\n')
 
-            if '"Interrupted"\n' != line_parts[12]:
+            if reason not in ("Interrupted", "Your target is dead"):
                 # spell cast not interrupted, therefore not cancelled.
                 continue
 
@@ -108,7 +128,7 @@ def get_casts(log_lines):
             else:
                 start_time = cancel_time
 
-            cast = (source, start_time, cancel_time, spell_id, CANCEL_LABEL)
+            cast = (source, start_time, cancel_time, spell_id, f"[{reason}]")
             cast_list.append(cast)
 
         elif "SPELL_HEAL" in line_parts[0]:
@@ -165,10 +185,13 @@ def get_casts(log_lines):
     return cast_list, full_heal_data
 
 
-def plot_casts(casts_dict, encounter=None, start=None, end=None, mark=None, anonymize=True):
+def plot_casts(casts_dict, encounter=None, start=None, end=None, mark=None, anonymize=True, deaths=None):
     casts = list(casts_dict.values())
     labels = list(casts_dict.keys())
     most_casts = max((len(c) for c in casts))
+
+    if deaths is None:
+        deaths = ()
 
     if anonymize:
         labels = [anonymize_name(s) for s in labels]
@@ -220,8 +243,11 @@ def plot_casts(casts_dict, encounter=None, start=None, end=None, mark=None, anon
                 if target in TANKS:
                     color = "#99ccff" if even else "#b3d9ff"
                 #     color = "#ff9999" if even else "#ffb3b3"
-                elif target == CANCEL_LABEL:
+                elif target == "[Interrupted]":
                     color = "#ff99ff" if even else "#ffccff"
+                    target = ""
+                elif target == "[Your target is dead]":
+                    color = "#800000" if even else "#b30000"
                     target = ""
                 elif target == "nil":
                     target = ""
@@ -266,6 +292,20 @@ def plot_casts(casts_dict, encounter=None, start=None, end=None, mark=None, anon
         s = int(parts[1])
         plt.axvline(60 * m + s, color="k")
 
+    last_ts = 0
+    y = -1
+    for timestamp, player in deaths:
+        x = (timestamp - start).total_seconds()
+        plt.axvline(x, color="k", alpha=0.5)
+
+        if timestamp == last_ts:
+            y -= 0.2
+        else:
+            y = -1
+
+        plt.text(x, y, player, ha="right", va="top")
+        last_ts = timestamp
+
     fig_path = "figs/casts.png"
     plt.savefig(fig_path)
     print(f"Saved casts figure to `{fig_path}`")
@@ -277,6 +317,9 @@ def analyse_activity(casts_dict, encounter, encounter_start, encounter_end):
     combat_time = (encounter_end - encounter_start).total_seconds()
     print(f"Activity for {encounter}, {combat_time:.1f}s")
 
+    print(
+        f"  {'Healer':<12s}  {'setup'}  {'activ'}  {'act %'}  {'inact'}  {'regen'}")
+
     for healer in HEALERS:
         end = encounter_start
 
@@ -284,9 +327,12 @@ def analyse_activity(casts_dict, encounter, encounter_start, encounter_end):
             continue
 
         casts = casts_dict[healer]
-        first_cast = casts[0]
-        setup_time = (first_cast[1] - end).total_seconds()
-        inactive_time = setup_time
+        first_cast_time = casts[0][1]
+        setup_time = (first_cast_time - end).total_seconds()
+        end = first_cast_time
+
+        inactive_time = 0.0
+        regen_time = 0.0
 
         for c in casts[1:]:
             source, cast_start, cast_end, spell_id, target = c
@@ -295,7 +341,10 @@ def analyse_activity(casts_dict, encounter, encounter_start, encounter_end):
                 end = cast_end
                 continue
 
-            inactive_time += (cast_start - end).total_seconds()
+            d_time = (cast_start - end).total_seconds()
+            inactive_time += d_time
+            if d_time > 5.0:
+                regen_time += d_time - 5.0
 
             if cast_end == cast_start:
                 end = cast_end + timedelta(seconds=1.5)
@@ -303,30 +352,20 @@ def analyse_activity(casts_dict, encounter, encounter_start, encounter_end):
                 end = cast_end
 
         if end < encounter_end:
-            inactive_time += (encounter_end - end).total_seconds()
+            d_time = (encounter_end - end).total_seconds()
+            inactive_time += d_time
+            if d_time > 5.0:
+                regen_time += d_time - 5.0
 
         active_time = combat_time - inactive_time
         active_pct = active_time / combat_time
-        print(f"  {healer + ':':<13s} {setup_time:4.1f}s  {active_time:5.1f}s  ({active_pct:4.1%}),  {inactive_time:5.1f}s inactivity")
+        print(f"  {healer:<12s}  {setup_time:5.1f}  {active_time:5.1f}  {active_pct:5.1%}  {inactive_time:5.1f}  "
+              f"{regen_time:5.1f}")
 
 
 def main(source, encounter=None, **kwargs):
-    encounter_i = encounter
-
     log = raw.get_lines(source)
-
-    encounters = list_encounters(log)
-
-    if encounter_i == 0:
-        encounter = None
-    elif encounter_i:
-        encounter = encounters[encounter_i - 1]
-    else:
-        encounter = select_encounter(encounters)
-
-    encounter_lines, encounter_start, encounter_end = lines_for_encounter(
-        log, encounter
-    )
+    encounter, encounter_lines, encounter_start, encounter_end = encounter_picker(log, encounter)
 
     casts, heals = get_casts(encounter_lines)
 
@@ -342,7 +381,9 @@ def main(source, encounter=None, **kwargs):
 
         casts_dict[s].append(c)
 
-    plot_casts(casts_dict, encounter, start=encounter_start, end=encounter_end, **kwargs)
+    deaths = get_deaths(encounter_lines)
+
+    plot_casts(casts_dict, encounter, start=encounter_start, end=encounter_end, deaths=deaths, **kwargs)
     analyse_activity(casts_dict, encounter, encounter_start, encounter_end)
 
 
