@@ -3,6 +3,7 @@ Script that gets the probability of an overheal based of +heal.
 
 By: Filip Gokstorp (Saintis), 2020
 """
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -21,7 +22,15 @@ def plot_oh_prob(
     n_heals,
     n_overheals,
     n_overheals_nc,
+    path=None,
 ):
+    if path is None:
+        path = "figs/probability"
+
+    # Make plot dirs
+    os.makedirs(path, exist_ok=True)
+    os.makedirs(path + "/likelihood", exist_ok=True)
+
     # extrapolate from first 1/2 of data (0 - spell_power / 2)
     ii = len(spell_powers) // 2
     e_sp = np.linspace(spell_powers[ii], sp_extrap, 101)
@@ -53,7 +62,8 @@ def plot_oh_prob(
     plt.grid()
     plt.legend()
 
-    plt.savefig(f"figs/probability/{player_name}_probability_{spell_id}.png")
+    plt.savefig(f"{path}/{player_name}_probability_{spell_id}.png")
+    plt.close()
 
     # Likelihood plot
     plt.figure(constrained_layout=True)
@@ -71,12 +81,12 @@ def plot_oh_prob(
     plt.grid()
     # plt.legend()
 
-    plt.savefig(f"figs/probability/likelihood/{player_name}_likelihood_{spell_id}.png")
+    plt.savefig(f"{path}/likelihood/{player_name}_likelihood_{spell_id}.png")
+    plt.close()
 
 
-def spell_overheal_probability(player_name, spell_id, lines, spell_power=None):
+def spell_overheal_probability(player_name, spell_id, lines, spell_power=None, path=None):
     """Plots overheal probability of each spell"""
-
     if spell_power is None:
         sp_neg = 400.0
         sp_shift = 0.0
@@ -150,30 +160,27 @@ def spell_overheal_probability(player_name, spell_id, lines, spell_power=None):
         n_heals,
         n_overheals,
         n_overheals_nc,
+        path=path,
     )
 
 
-def main(
-    player, source, spell_power=500, ignore_crit=False, spell_id=None, **kwargs
+def overheal_probability(
+    source, character_name, spell_power=500, ignore_crit=False, spell_id=None, path=None, **kwargs
 ):
-    heal_lines, periodics, absorbs = read_heals(player, source, **kwargs)
+    heals, periodics, absorbs = read_heals(source, character_name=character_name, **kwargs)
 
     # Group lines
-    heal_lines = group_processed_lines(heal_lines, ignore_crit, spell_id=spell_id)
+    heal_lines = group_processed_lines(heals + periodics, ignore_crit, spell_id=spell_id)
     for spell_id, lines in heal_lines.items():
-        spell_overheal_probability(player, spell_id, lines, spell_power)
+        spell_overheal_probability(character_name, spell_id, lines, spell_power, path=path)
 
 
-if __name__ == "__main__":
+def main(argv=None):
     from backend.parser import OverhealParser
-
-    # Make plot dirs
-    import os
-    os.makedirs("figs/probability/likelihood", exist_ok=True)
 
     parser = OverhealParser(
         description="""Plots probability of overheals for different spells.""",
-        need_player=True,
+        need_character=True,
         accept_spell_id=True,
         accept_spell_power=True,
     )
@@ -181,7 +188,15 @@ if __name__ == "__main__":
     parser.add_argument(
         "--ignore_crit", action="store_true", help="Remove critical heals from analysis"
     )
+    parser.add_argument(
+        "--path"
+    )
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
-    main(**vars(args))
+    overheal_probability(args.source, args.character_name,
+                         spell_id=args.spell_id, spell_power=args.spell_power, ignore_crit=args.ignore_crit, path=args.path)
+
+
+if __name__ == "__main__":
+    main()

@@ -3,6 +3,7 @@ Script that estimates spell cumulative distribution function of overheal chance.
 
 By: Filip Gokstorp (Saintis), 2020
 """
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -13,7 +14,7 @@ from backend.parser import OverhealParser
 import spell_data as sd
 
 
-def process_spell(player_name, spell_id, spell_lines, spell_power=None, show=True):
+def process_spell(player_name, spell_id, spell_lines, spell_power=None, show=True, path=None):
     spell_name = sd.spell_name(spell_id)
 
     relative_underheal = []
@@ -51,7 +52,10 @@ def process_spell(player_name, spell_id, spell_lines, spell_power=None, show=Tru
     plt.ylim((0, 1))
     plt.legend()
 
-    plt.savefig(f"figs/cdf/{player_name}_cdf_{spell_id}.png")
+    if path is None:
+        path = "figs/cdf"
+
+    plt.savefig(f"{path}/{player_name}_cdf_{spell_id}.png")
 
     # plt.figure(constrained_layout=True)
     # plt.fill_between(relative_underheal, 1 - cast_fraction, label="Underheal")
@@ -68,8 +72,15 @@ def process_spell(player_name, spell_id, spell_lines, spell_power=None, show=Tru
         plt.show()
 
 
-def overheal_cdf(player, source, spell_id=None, **kwargs):
-    heal_lines, periodic_lines, absorbs = read_heals(player, source, **kwargs)
+def overheal_cdf(source, character_name, spell_id=None, path=None, **kwargs):
+
+    # make sure directories exist
+    if path is None:
+        path = "figs/cdf"
+
+    os.makedirs(path, exist_ok=True)
+
+    heal_lines, periodic_lines, absorbs = read_heals(source, character_name=character_name, **kwargs)
 
     # Group lines
     heal_lines = group_processed_lines(heal_lines, False, spell_id=spell_id)
@@ -86,27 +97,28 @@ def overheal_cdf(player, source, spell_id=None, **kwargs):
             print(f"Could not find casts of spell [{spell_id}]")
             exit(1)
 
-        process_spell(player, spell_id, lines, **kwargs)
+        process_spell(character_name, spell_id, lines, **kwargs)
     else:
         for spell_id, lines in heal_lines.items():
-            process_spell(player, spell_id, lines, show=False, **kwargs)
+            process_spell(character_name, spell_id, lines, show=False, path=path, **kwargs)
         for spell_id, lines in periodic_lines.items():
-            process_spell(player, spell_id, lines, show=False, **kwargs)
+            process_spell(character_name, spell_id, lines, show=False, path=path, **kwargs)
 
 
-if __name__ == "__main__":
-    import os
-
-    # make sure directories exist
-    os.makedirs("figs/cdf", exist_ok=True)
-
+def main():
     parser = OverhealParser(
         description="Analyses logs and gives overheal cdf.",
-        need_player=True,
+        need_character=True,
         accept_spell_id=True,
         accept_spell_power=True
     )
-
+    parser.add_argument("--path", help="Path to output figures too.", default="figs/cdf")
     args = parser.parse_args()
 
-    overheal_cdf(**vars(args))
+    path = args.path
+
+    overheal_cdf(args.source, args.character_name, args.spell_id, path)
+
+
+if __name__ == "__main__":
+    main()

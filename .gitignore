@@ -4,3 +4,5 @@ figs/
 *.txt
 # Ignores raid composition file
 raid.json
+# Ignore talent file
+me.json

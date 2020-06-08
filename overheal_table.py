@@ -105,8 +105,8 @@ def display_lines(total_data, data_list, group):
     print_spell_aggregate("", group_name, total_data)
 
 
-def process_log(player, source, ignore_crit=False, **kwargs):
-    heal_lines, periodic_lines, _ = read_heals(player, source, **kwargs)
+def process_log(source, character_name=None, ignore_crit=False, **kwargs):
+    heal_lines, periodic_lines, _ = read_heals(source, character_name=character_name, **kwargs)
 
     # Group lines
     heal_lines = group_processed_lines(heal_lines, ignore_crit)
@@ -120,22 +120,22 @@ def process_log(player, source, ignore_crit=False, **kwargs):
     display_lines(total_data, data_list, "Periodic")
 
 
-if __name__ == "__main__":
+def main(argv=None):
     import argparse
 
     parser = OverhealParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
-Analyses logs and count up number of overheals. Returns a list of spells and the number of recorded heals, as well as overheal frequencies.
+    Analyses logs and count up number of overheals. Returns a list of spells and the number of recorded heals, as well as overheal frequencies.
 
-Header explaination:
-    #H: Number of heals recorded.
-    No OH: Percentage of heals that had no overheal (underheals).
-    Any OH: Percantage of heals that had 1 or more overheal.
-    Half OH: Percentage of heals that overhealed for at least 50% of the heal value.
-    Full OH: Percentage of heals that overhealed for at least 90% of the heal value.
-    % OHd: Percentage of heal values that were overheal, same overheal percentage shown in WarcraftLogs. """,
-        need_player=True,
+    Header explaination:
+        #H: Number of heals recorded.
+        No OH: Percentage of heals that had no overheal (underheals).
+        Any OH: Percantage of heals that had 1 or more overheal.
+        Half OH: Percentage of heals that overhealed for at least 50% of the heal value.
+        Full OH: Percentage of heals that overhealed for at least 90% of the heal value.
+        % OHd: Percentage of heal values that were overheal, same overheal percentage shown in WarcraftLogs. """,
+        need_character=True,
 
     )
 
@@ -143,6 +143,12 @@ Header explaination:
         "--ignore_crit", action="store_true", help="Remove critical heals from analysis"
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
+
+    # print(vars(args))
 
     process_log(**vars(args))
+
+
+if __name__ == "__main__":
+    main()

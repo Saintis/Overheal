@@ -146,6 +146,7 @@ SPELL_IGNORE = [
     "17531",  # Major Mana Potion
     "17291",  # Stratholme Holy Water
     "16666",  # Demonic Rune
+    "15701",  # Night Dragon's Breath
     "14751",  # Inner Focus
     "7744",  # Will of the Forsaken
     "5019",  # Shoot
@@ -221,6 +222,9 @@ SPELL_COEFFICIENTS = {
 
     # Power Word: Shield
     "10901": 0.1,
+
+    # Dispel Magic
+    "988": 0.0,
 }
 
 # Raw healing of each spell
@@ -389,6 +393,9 @@ def spell_heal(spell_id, warn_on_not_found=True):
 
 
 def spell_mana(spell_id, talents=None, warn_on_not_found=True):
+    if talents is None:
+        talents = {}
+
     if spell_id not in SPELL_MANA:
         if warn_on_not_found and spell_id not in warning_list["mana"]:
             print(f"Unknown mana cost for spell {spell_id}, https://classic.wowhead.com/spell={spell_id}")
@@ -412,6 +419,6 @@ def spell_mana(spell_id, talents=None, warn_on_not_found=True):
 
     if "Improved Prayer of Healing" in talents:
         if name_without_rank == "Prayer of Healing":
-            mana -= mana * 0.10 * talents["Prayer of Healing"]
+            mana -= mana * 0.10 * talents["Improved Prayer of Healing"]
 
     return mana

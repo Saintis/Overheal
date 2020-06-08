@@ -127,8 +127,8 @@ def print_results(data):
     print(message)
 
 
-def main(player, source, spell_id=None, **kwargs):
-    heal_lines, _, _ = read_heals(player, source, **kwargs)
+def overheal_crit(source, character_name, spell_id=None, **kwargs):
+    heal_lines, _, _ = read_heals(source, character_name=character_name, **kwargs)
 
     # Group lines
     heal_lines = group_processed_lines(heal_lines, False, spell_id=spell_id)
@@ -152,7 +152,7 @@ def main(player, source, spell_id=None, **kwargs):
     print_results(data)
 
 
-if __name__ == "__main__":
+def main(argv=None):
     import os
     from backend.parser import OverhealParser
 
@@ -163,10 +163,14 @@ if __name__ == "__main__":
         description="Analyses log and estimates healing of crits. Counts up the healing and overhealing done by each "
                     "found crit. Prints out extra healing done by each crit on average and the equivalent +heal worth "
                     "for each spell, and for the average spell profile over the whole combat log.",
-        need_player=True,
+        need_character=True,
         accept_spell_id=True,
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
-    main(**vars(args))
+    overheal_crit(args.source, args.character_name, args.spell_id)
+
+
+if __name__ == "__main__":
+    main()

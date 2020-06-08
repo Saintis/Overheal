@@ -14,8 +14,11 @@ from backend import group_processed_lines
 import spell_data as sd
 
 
-def plot_overheal(player, spell_powers, spell_id, data, sp_shift=0, sp_extrap=200):
-    os.makedirs("figs/overheal", exist_ok=True)
+def plot_overheal(player, spell_powers, spell_id, data, sp_shift=0, sp_extrap=200, path=None):
+    if path is None:
+        path = "figs/overheal"
+
+    os.makedirs(path, exist_ok=True)
 
     sp = spell_powers + sp_shift
     spell_name = sd.spell_name(spell_id)
@@ -94,7 +97,8 @@ def plot_overheal(player, spell_powers, spell_id, data, sp_shift=0, sp_extrap=20
     if spell_id:
         fig_name += "_" + spell_id
 
-    plt.savefig(f"figs/overheal/{fig_name}.png")
+    plt.savefig(f"{path}/{fig_name}.png")
+    plt.close()
 
 
 def process_lines_for_spell(lines, dh, base_heal=None):
@@ -191,14 +195,14 @@ def group_lines_for_spell(spell_id, lines, spell_powers):
     return total_heals, total_overheals, total_underheals, count_heals, nn_underheals, nn_overheals, nn_full_overheals
 
 
-def main(
-    player, source, ignore_crit=False, spell_id=None, spell_power=None, **kwargs
+def overheal_plot(
+    source, character_name, ignore_crit=False, spell_id=None, spell_power=None, path=None, **kwargs
 ):
-    heal_lines, periodic_lines, absorbs = read_heals(player, source, spell_id=spell_id, **kwargs)
+    heal_lines, periodic_lines, absorbs = read_heals(source, character_name=character_name, spell_id=spell_id, **kwargs)
 
     # Group lines
     heal_lines = group_processed_lines(
-        heal_lines, ignore_crit, spell_id=spell_id
+        heal_lines + periodic_lines, ignore_crit, spell_id=spell_id
     )
 
     if spell_power is None:
@@ -217,26 +221,26 @@ def main(
 
     for spell_id, lines in heal_lines.items():
         out = group_lines_for_spell(spell_id, lines, spell_powers)
-        plot_overheal(player, spell_powers, spell_id, out, sp_shift=sp_shift, sp_extrap=sp_extrap)
+        plot_overheal(character_name, spell_powers, spell_id, out, sp_shift=sp_shift, sp_extrap=sp_extrap, path=path)
 
 
-if __name__ == "__main__":
+def main(argv=None):
     import argparse
     from backend.parser import OverhealParser
 
     parser = OverhealParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
-Analyses logs and count up number of overheals. Returns a list of spells and the number of recorded heals, as well as overheal frequencies.
+    Analyses logs and count up number of overheals. Returns a list of spells and the number of recorded heals, as well as overheal frequencies.
 
-Header explaination:
-    #H: Number of heals recorded.
-    No OH: Percentage of heals that had no overheal (underheals).
-    Any OH: Percantage of heals that had 1 or more overheal.
-    Half OH: Percentage of heals that overhealed for at least 50% of the heal value.
-    Full OH: Percentage of heals that overhealed for at least 90% of the heal value.
-    % OHd: Percentage of heal values that were overheal, same overheal percentage shown in WarcraftLogs. """,
-        need_player=True,
+    Header explaination:
+        #H: Number of heals recorded.
+        No OH: Percentage of heals that had no overheal (underheals).
+        Any OH: Percantage of heals that had 1 or more overheal.
+        Half OH: Percentage of heals that overhealed for at least 50% of the heal value.
+        Full OH: Percentage of heals that overhealed for at least 90% of the heal value.
+        % OHd: Percentage of heal values that were overheal, same overheal percentage shown in WarcraftLogs. """,
+        need_character=True,
         accept_spell_id=True,
         accept_spell_power=True
     )
@@ -244,7 +248,12 @@ Header explaination:
     parser.add_argument(
         "--ignore_crit", action="store_true", help="Remove critical heals from analysis"
     )
+    parser.add_argument("--path")
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
-    main(**vars(args))
+    overheal_plot(args.source, args.character_name, spell_id=args.spell_id, spell_power=args.spell_power, ignore_crit=args.ignore_crit, path=args.path)
+
+
+if __name__ == "__main__":
+    main()

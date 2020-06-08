@@ -3,6 +3,7 @@ Python script for getting a summary plot of heals and their overheal fraction.
 
 By: Filip Gokstorp (Saintis), 2020
 """
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -11,12 +12,15 @@ from backend import group_processed_lines
 import spell_data as sd
 
 
-def process_spell(spell_id, spell_lines, spell_power):
+def process_spell(spell_id, spell_lines, spell_power=None):
     base_heal = sd.spell_heal(spell_id)
     coeff = sd.spell_coefficient(spell_id)
 
     if base_heal == 0 or coeff == 0:
         return
+
+    if spell_power is None:
+        spell_power = 700.0
 
     extra_heal = coeff * spell_power
     base_heal_fraction = base_heal / (base_heal + extra_heal)
@@ -44,9 +48,14 @@ def process_spell(spell_id, spell_lines, spell_power):
     return n_heal, n_underheal, n_overheal, n_downrank, n_drop_h
 
 
-def main(player_name, source, spell_power):
+def overheal_summary(source, character_name, spell_power, path=None, show=False):
     # log_lines = raw.get_lines(log_file)
-    heal_lines, periodic_lines, _ = read_heals(player_name, source)
+    heal_lines, periodic_lines, _ = read_heals(source, character_name=character_name)
+
+    if path is None:
+        path = "figs"
+
+    os.makedirs(path, exist_ok=True)
 
     # Group lines
     heal_lines = group_processed_lines(heal_lines, False)
@@ -61,9 +70,15 @@ def main(player_name, source, spell_power):
 
     for spell_id, lines in heal_lines.items():
         labels.append(sd.spell_name(spell_id))
-        n_heal, n_underheal, n_overheal, n_downrank, n_drop_h = process_spell(
+
+        data = process_spell(
             spell_id, lines, spell_power
         )
+
+        if not data:
+            continue
+
+        n_heal, n_underheal, n_overheal, n_downrank, n_drop_h = data
 
         nn_underheal.append(n_underheal / n_heal)
         nn_overheal.append(n_overheal / n_heal)
@@ -72,9 +87,14 @@ def main(player_name, source, spell_power):
 
     for spell_id, lines in periodic_lines.items():
         labels.append(sd.spell_name(spell_id))
-        n_heal, n_underheal, n_overheal, n_downrank, n_drop_h = process_spell(
+        data = process_spell(
             spell_id, lines, spell_power
         )
+
+        if not data:
+            continue
+
+        n_heal, n_underheal, n_overheal, n_downrank, n_drop_h = data
 
         nn_underheal.append(n_underheal / n_heal)
         nn_overheal.append(n_overheal / n_heal)
@@ -115,23 +135,29 @@ def main(player_name, source, spell_power):
     plt.xticks(rotation=90)
     plt.legend(loc="center left", bbox_to_anchor=(1, 0.5))
 
-    plt.savefig(f"figs/{player_name}_summary.png")
-    plt.show()
+    plt.savefig(f"{path}/{character_name}_summary.png")
+
+    if show:
+        plt.show()
+
+    plt.close()
+
+
+def main(argv=None):
+    from backend.parser import OverhealParser
+
+    parser = OverhealParser(
+        description="Analyses logs and gives summary plot.",
+        need_character=True,
+        accept_spell_power=True,
+    )
+    parser.add_argument("--path")
+    parser.add_argument("--show", action="store_true")
+
+    args = parser.parse_args(argv)
+
+    overheal_summary(args.source, args.character_name, spell_power=args.spell_power, path=args.path, show=args.show)
 
 
 if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(
-        description="Analyses logs and gives summary plot."
-    )
-
-    parser.add_argument("player_name", help="Player name to analyse overheal for")
-    parser.add_argument("log_file", help="Path to the log file to analyse")
-    parser.add_argument(
-        "spell_power", type=int, help="Spell power for base heal fraction calculation"
-    )
-
-    args = parser.parse_args()
-
-    main(args.player_name, args.log_file, args.spell_power)
+    main()

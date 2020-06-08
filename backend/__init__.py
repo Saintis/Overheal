@@ -25,7 +25,7 @@ def group_processed_lines(processed_lines, ignore_crit, spell_id=None):
 
     filter_spell_id = spell_id
 
-    for time_stamp, source, spell_id, target, total_heal, overheal, is_crit in processed_lines:
+    for time_stamp, source, spell_id, target, health_pct, total_heal, overheal, is_crit in processed_lines:
         if ignore_crit and is_crit:
             continue
 
