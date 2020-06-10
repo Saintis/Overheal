@@ -37,7 +37,7 @@ def test_overheal_table_api(script_runner):
     assert ret.stderr == ""
 
     assert ret.stdout == """\
-Fetching data from WCL...
+Fetching healing events from WCL...
 [>                                                                     ]    0%         0 /  3500005
 [======>                                                               ]    9%    309870 /  3500005
 [======================>                                               ]   33%   1148517 /  3500005
