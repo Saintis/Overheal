@@ -3,15 +3,20 @@ Read data from WCL API.
 
 By: Filip Gokstorp (Saintis), 2020
 """
+import os
 import requests
 from json.decoder import JSONDecodeError
 from datetime import datetime
 
-try:
-    API_KEY = open("apikey.txt", "r").read().strip()
-except FileNotFoundError:
-    print("API key not found. Please save in a plain text file called `apikey.txt`.")
-    exit(100)
+# First try environment key
+API_KEY = os.environ.get("WCL_API_KEY", None)
+if API_KEY is None:
+    # Otherwise try to read from file
+    try:
+        API_KEY = open("apikey.txt", "r").read().strip()
+    except FileNotFoundError:
+        print("API key not found. Please save in a plain text file called `apikey.txt`.")
+        exit(100)
 
 
 API_ROOT = "https://classic.warcraftlogs.com:443/v1"
