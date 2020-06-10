@@ -43,7 +43,7 @@ def plot_overheal(player, spell_powers, spell_id, data, sp_shift=0, sp_extrap=20
     if spell_id:
         fig_name += "_" + spell_id
 
-    plt.savefig(f"figs/overheal/{fig_name}.png")
+    plt.savefig(f"{path}/{fig_name}.png")
 
     # number of heals figure
     fig = plt.figure(figsize=(10, 4), constrained_layout=True)
