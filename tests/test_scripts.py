@@ -8,7 +8,6 @@ wcl_report = "https://classic.warcraftlogs.com/reports/xtj2mVgQXFp4n9RT"
 character = "Saintis"
 
 
-@pytest.mark.script_launch_mode('subprocess')
 def test_overheal_table(script_runner):
     ret = script_runner.run(python, "overheal_table.py", log_file, character)
     assert ret.success
@@ -72,7 +71,6 @@ Unknown name for spell 15701, https://classic.wowhead.com/spell=15701
 """
 
 
-@pytest.mark.script_launch_mode('subprocess')
 def test_overheal_crit(script_runner):
     ret = script_runner.run(python, "overheal_crit.py", log_file, character)
     assert ret.success
@@ -93,7 +91,6 @@ Crits:
 """
 
 
-@pytest.mark.script_launch_mode('subprocess')
 def test_overheal_cdf(script_runner, tmpdir):
     path = tmpdir.strpath
     ret = script_runner.run(python, "overheal_cdf.py", log_file, character, "--path", path)
@@ -113,7 +110,6 @@ def test_overheal_cdf(script_runner, tmpdir):
         assert f in filenames
 
 
-@pytest.mark.script_launch_mode('subprocess')
 def test_overheal_probability(script_runner, tmpdir):
     path = tmpdir.strpath
     ret = script_runner.run(python, "overheal_probability.py", log_file, character, "--path", path)
@@ -145,7 +141,6 @@ def test_overheal_probability(script_runner, tmpdir):
         assert f in filenames
 
 
-@pytest.mark.script_launch_mode('subprocess')
 def test_overheal_summary(script_runner, tmpdir):
     path = tmpdir.strpath
     ret = script_runner.run(python, "overheal_summary.py", log_file, character, "--path", path)
@@ -161,7 +156,6 @@ def test_overheal_summary(script_runner, tmpdir):
     assert f"{character}_summary.png" in filenames
 
 
-@pytest.mark.script_launch_mode('subprocess')
 def test_overheal_plot(script_runner, tmpdir):
     path = tmpdir.strpath
     ret = script_runner.run(python, "overheal_plot.py", log_file, character, "--path", path)

@@ -6,7 +6,6 @@ log_file = "tests/test_log.txt"
 character = "Saintis"
 
 
-@pytest.mark.script_launch_mode('subprocess')
 def test_evaluate_3t1(script_runner):
     ret = script_runner.run(python, "evaluate_3t1.py", log_file, character, "-e", "1")
     assert ret.success
