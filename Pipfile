@@ -1,0 +1,10 @@
+[dev-packages]
+pytest = "*"
+
+[packages]
+requests = "*"
+matplotlib = "*"
+numpy = "*"
+
+[requires]
+python_version = "3.7"
