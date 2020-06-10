@@ -31,7 +31,6 @@ def test_overheal_table(script_runner):
 """
 
 
-@pytest.mark.script_launch_mode('subprocess')
 def test_overheal_table_api(script_runner):
     ret = script_runner.run(python, "overheal_table.py", wcl_report, character)
     assert ret.success

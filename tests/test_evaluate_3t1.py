@@ -1,5 +1,4 @@
 """Test for evaluate 3t1 scritp."""
-import pytest
 
 python = "python3"
 log_file = "tests/test_log.txt"
