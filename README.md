@@ -1,5 +1,6 @@
 # Overheal
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Saintis](https://circleci.com/gh/Saintis/Overheal.svg?style=shield)](https://app.circleci.com/pipelines/github/Saintis/Overheal)
 
 Overheal analysis of WoW Classic combatlogs.
 
