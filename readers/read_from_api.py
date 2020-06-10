@@ -101,7 +101,7 @@ def _get_heals(code, start=0, end=None, names=None, for_player=None):
 
     next_start = start
 
-    print("Fetching data from WCL...")
+    print("Fetching healing events from WCL...")
     progress_bar = ProgressBar(end - start, length=70)
 
     # will have to loop to get results
@@ -178,6 +178,88 @@ def _get_heals(code, start=0, end=None, names=None, for_player=None):
     return heals, periodics, absorbs
 
 
+def _get_damage(code, start=0, end=None, names=None, for_player=None):
+    """Gets all heals and damage events for the log"""
+
+    if end is None:
+        end = start + 3 * 60 * 60 * 1000  # look at up to 3h of data
+
+    if names is None:
+        names = dict()
+
+    damage = []
+
+    next_start = start
+
+    print("Fetching damage-taken events from WCL...")
+    progress_bar = ProgressBar(end - start, length=70)
+
+    # will have to loop to get results
+    request_more = True
+    while request_more:
+        url = f"{API_ROOT}/report/events/damage-taken/{code}?start={next_start}&end={end}&api_key={API_KEY}"
+
+        print(progress_bar.render(next_start - start), end="\r")
+
+        data = _get_api_request(url)
+        events = data["events"]
+        if "nextPageTimestamp" in data:
+            next_start = data["nextPageTimestamp"]
+        else:
+            request_more = False
+
+        for e in events:
+            try:
+                timestamp = e["timestamp"]
+                timestamp = datetime.fromtimestamp(timestamp / 1000.0).time()
+                # spell_id = str(e["ability"]["guid"])
+
+                # if "sourceID" not in e:
+                #     # heal not from a player, skipping
+                #     continue
+
+                target = e["targetID"]
+                target = names.get(target, f"[pid {target}]")
+
+                if for_player and target != for_player:
+                    continue
+
+                source = e.get("sourceID", None)
+                # target = names.get(target, f"[pid {target}]")
+                hitpoints = e.get("hitPoints", None)
+                # event_type = e["type"]
+
+                amount = e["amount"]
+                mitigated = e.get("mitigated", 0)
+                overkill = e.get("overkill", -1)
+
+                # is_crit = e.get("hitType", 1) == 2
+
+                if amount == 0:
+                    # ignore attacks that do no damage
+                    continue
+
+                damage.append(
+                    (
+                        timestamp,
+                        source,
+                        0,
+                        target,
+                        hitpoints,
+                        -(amount + mitigated),
+                        -mitigated,
+                        -overkill,
+                    )
+                )
+            except Exception as ex:
+                print("Exception while handling line", e)
+                print(ex)
+
+    print(progress_bar.render(end - start))
+
+    return damage
+
+
 def get_heals(code, start=None, end=None, character_name=None, **_):
     """
     Gets heal events for specified log code.
@@ -185,7 +267,7 @@ def get_heals(code, start=None, end=None, character_name=None, **_):
     :param code: the WarcraftLogs code.
     :param start: the start time, in milliseconds, to get heals for.
     :param end: the end time, in milliseconds, to get heals for. If None, gets logs for up to 3 hours.
-    :param name: Optional. Name to filter heal events for.
+    :param character_name: Optional. Name to filter heal events for.
 
     :returns (heals, periodic_heals, absorbs), lists of heal events
     """
@@ -201,6 +283,56 @@ def get_heals(code, start=None, end=None, character_name=None, **_):
     return _get_heals(code, start, end, names, for_player=character_name)
 
 
+def get_damage(code, start=None, end=None, character_name=None, **_):
+    """
+    Gets damage-taken events for specified log code.
+
+    :param code: the WarcraftLogs code.
+    :param start: the start time, in milliseconds, to get heals for.
+    :param end: the end time, in milliseconds, to get heals for. If None, gets logs for up to 3 hours.
+    :param character_name: Optional. Name to filter heal events for.
+
+    :returns (heals, periodic_heals, absorbs), lists of heal events
+    """
+    names = get_player_names(code)
+
+    if start is None:
+        start = 0
+
+    if end is None:
+        fight_data = get_fights(code)
+        end = fight_data["end"] - fight_data["start"]
+
+    return _get_damage(code, start, end, names, for_player=character_name)
+
+
+def get_heals_and_damage(code, start=None, end=None, character_name=None, **_):
+    """
+    Gets heal and damage-taken events for specified log code.
+
+    :param code: the WarcraftLogs code.
+    :param start: the start time, in milliseconds, to get heals for.
+    :param end: the end time, in milliseconds, to get heals for. If None, gets logs for up to 3 hours.
+    :param character_name: Optional. Name to filter heal events for.
+
+    :returns (heals, periodic_heals, absorbs), lists of heal events
+    """
+    names = get_player_names(code)
+
+    if start is None:
+        start = 0
+
+    if end is None:
+        fight_data = get_fights(code)
+        end = fight_data["end"] - fight_data["start"]
+
+    damage = _get_damage(code, start, end, names, for_player=character_name)
+    heals, periodics, _ = _get_heals(code, start, end, names, for_player=character_name)
+
+    # join damage, heals, periodics and sort by timestamp
+    return sorted(damage + heals + periodics, key=lambda e: e[0])
+
+
 def _test_code():
     import argparse
     parser = argparse.ArgumentParser("Tests the api reading code.")
@@ -209,19 +341,29 @@ def _test_code():
     parser.add_argument("-n", "--name")
 
     args = parser.parse_args()
-    heals, periodics, absorbs = get_heals(args.code, character_name=args.name)
 
-    print("Heals")
-    for h in heals[:20]:
-        print("  ", *h)
+    # heals, periodics, absorbs = get_heals(args.code, character_name=args.name)
+    # print("Heals")
+    # for h in heals[:20]:
+    #     print("  ", *h)
+    #
+    # print("Periodics")
+    # for h in periodics[:20]:
+    #     print("  ", *h)
+    #
+    # print("Absorbs")
+    # for h in absorbs[:20]:
+    #     print("  ", *h)
 
-    print("Periodics")
-    for h in periodics[:20]:
-        print("  ", *h)
+    # damage = get_damage(args.code, character_name=args.name)
+    # print("Damage")
+    # for e in damage:
+    #     print("  ", *e)
 
-    print("Absorbs")
-    for h in absorbs[:20]:
-        print("  ", *h)
+    all_events = get_heals_and_damage(args.code, character_name=args.name)
+    print("All events")
+    for e in all_events[:50]:
+        print("  ", *e)
 
 
 if __name__ == "__main__":
