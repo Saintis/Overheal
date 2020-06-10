@@ -167,9 +167,13 @@ def test_overheal_plot(script_runner, tmpdir):
     _, _, filenames = next(os.walk(tmpdir))
 
     expected_ids = (10917, 2055, 2061, 9474, 6063, 2053, 10929)
+
+    assert len(filenames) == 2 * len(expected_ids), print(filenames)
+
     expected_files = (f"{character}_overheal_{i}.png" for i in expected_ids)
+    for f in expected_files:
+        assert f in filenames
 
-    assert len(filenames) == len(expected_ids), print(filenames)
-
+    expected_files = (f"{character}_heal_{i}.png" for i in expected_ids)
     for f in expected_files:
         assert f in filenames
