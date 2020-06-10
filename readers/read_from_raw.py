@@ -33,6 +33,9 @@ class RawProcessor:
         self.periodic_heals = []
         self.damage = []
 
+        self.resurrections = []
+        self.deaths = []
+
     def get_local_timestamp(self, part):
         """Gets local timestamp relative to start of encounter."""
 
@@ -54,6 +57,12 @@ class RawProcessor:
 
             elif "SPELL_PERIODIC_HEAL," in line:
                 self.process_heal(line, True)
+
+            elif "UNIT_DIED," in line:
+                self.process_resurrection_or_death(line, self.deaths)
+
+            elif "SPELL_RESURRECT," in line:
+                self.process_resurrection_or_death(line, self.resurrections)
 
             elif self.include_damage:
                 if "SWING_DAMAGE_LANDED," in line:
@@ -91,7 +100,7 @@ class RawProcessor:
 
         is_crit = "1" in line_parts[32]
 
-        p_line = (timestamp, source, spell_id, target, health_pct, gross_heal, overheal, is_crit)
+        p_line = (timestamp, source, spell_id, target, target_id, health_pct, gross_heal, overheal, is_crit)
 
         self.all_events.append(p_line)
         if periodic:
@@ -125,43 +134,25 @@ class RawProcessor:
 
         mitigated = gross_damage - net_damage
 
-        data = (timestamp, source, spell_id, target, health_pct, -gross_damage, -mitigated, -overkill)
+        data = (timestamp, source, spell_id, target, target_id, health_pct, -gross_damage, -mitigated, -overkill)
         self.all_events.append(data)
         self.damage.append(data)
 
         # print(line[:-1])
         # print(data)
 
+    def process_resurrection_or_death(self, line, the_list):
+        line_parts = line.split(",")
 
-def _process_line(parts, ref_time=None):
-    """
-    Process a matched line.
+        unit_id = line_parts[5]
+        if "Creature" in unit_id:
+            # ignore mob and boss deaths
+            return
 
-    Splits each line by ,
+        timestamp = self.get_local_timestamp(line_parts[0])
+        name = get_player_name(line_parts[6])
 
-    Extracts spell id and name, as well as total heal and overheal values
-
-    :param parts: the line parts to extract data from
-    :param ref_time: timestamp to reference times to
-    :returns (spell id, spell name, heal, overheal, crit status)
-    """
-    time_stamp = get_time_stamp(parts[0])
-
-    if ref_time is not None:
-        time_stamp -= ref_time
-
-    source = get_player_name(parts[2])
-    target = get_player_name(parts[6])
-
-    spell_id = parts[9]
-    # spell_name = parts[10]
-
-    total_heal = int(parts[29])
-    overheal = int(parts[30])
-
-    is_crit = "1" in parts[32]
-
-    return (time_stamp, source, spell_id, target, total_heal, overheal, is_crit)
+        the_list.append((timestamp, unit_id, name))
 
 
 def get_lines(log_file):
@@ -194,3 +185,10 @@ def get_heals_and_damage(log_lines, character_name=None, normalise_time=True, **
     line_processor.process_lines(log_lines)
 
     return line_processor.all_events
+
+
+def get_processed_lines(log_lines, character_name=None, normalise_time=True, **_):
+    line_processor = RawProcessor(normalise_time=normalise_time, character_name=character_name, include_damage=True)
+    line_processor.process_lines(log_lines)
+
+    return line_processor
