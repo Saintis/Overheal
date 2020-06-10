@@ -67,6 +67,12 @@ class RawProcessor:
 
     def process_heal(self, line, periodic=False):
         line_parts = line.split(",")
+        target_id = line_parts[5]
+
+        if "Creature" in target_id:
+            # ignore healing done by creatures
+            return
+
         source = get_player_name(line_parts[2])
         if self.character_name and source != self.character_name:
             return
@@ -119,7 +125,7 @@ class RawProcessor:
 
         mitigated = gross_damage - net_damage
 
-        data = (timestamp, source, spell_id, target, health_pct, -gross_damage, -mitigated, overkill)
+        data = (timestamp, source, spell_id, target, health_pct, -gross_damage, -mitigated, -overkill)
         self.all_events.append(data)
         self.damage.append(data)
 

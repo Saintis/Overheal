@@ -363,7 +363,7 @@ def analyse_activity(casts_dict, encounter, encounter_start, encounter_end):
               f"{regen_time:5.1f}")
 
 
-def main(source, encounter=None, **kwargs):
+def analyse_casts(source, encounter=None, **kwargs):
     log = raw.get_lines(source)
     encounter, encounter_lines, encounter_start, encounter_end = encounter_picker(log, encounter)
 
@@ -387,18 +387,12 @@ def main(source, encounter=None, **kwargs):
     analyse_activity(casts_dict, encounter, encounter_start, encounter_end)
 
 
-if __name__ == "__main__":
+def main(argv=None):
     parser = OverhealParser(
         description="Analyses a boss encounter, or whole combat log, and characterise the amount of heal sniping going "
-        "on. Only accepts WoWCombatLog.txt currently.",
-        need_player=False,
-    )
-
-    parser.add_argument(
-        "-e",
-        "--encounter",
-        type=int,
-        help="Encounter to look at, or 0 for whole encounter. Skips selector dialogue.",
+                    "on. Only accepts WoWCombatLog.txt currently.",
+        need_character=False,
+        accept_encounter=True,
     )
     parser.add_argument(
         "--mark",
@@ -408,6 +402,10 @@ if __name__ == "__main__":
         "--anonymize", action="store_true", help="Anonymizes names for distribution."
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
-    main(**vars(args))
+    analyse_casts(args.source, encounter=args.encounter, mark=args.mark, anonymize=args.anonymize)
+
+
+if __name__ == "__main__":
+    main()

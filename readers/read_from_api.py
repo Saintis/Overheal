@@ -131,13 +131,14 @@ def _get_heals(code, start=0, end=None, names=None, for_player=None):
 
                 target = e["targetID"]
                 target = names.get(target, f"[pid {source}]")
+                hitpoints = e.get("hitPoints", None)
                 # event_type = e["type"]
 
                 amount = e["amount"]
 
                 if e["type"] == "absorbed":
                     # Shield absorb
-                    absorbs.append((timestamp, source, spell_id, target, amount, 0, False))
+                    absorbs.append((timestamp, source, spell_id, target, hitpoints, amount, 0, False))
                     continue
 
                 overheal = e.get("overheal", 0)
@@ -145,7 +146,7 @@ def _get_heals(code, start=0, end=None, names=None, for_player=None):
                 if e.get("tick"):
                     # Periodic tick
                     periodics.append(
-                        (timestamp, source, spell_id, target, amount + overheal, overheal, False)
+                        (timestamp, source, spell_id, target, hitpoints, amount + overheal, overheal, False)
                     )
                     continue
 
@@ -157,6 +158,7 @@ def _get_heals(code, start=0, end=None, names=None, for_player=None):
                         source,
                         spell_id,
                         target,
+                        hitpoints,
                         amount + overheal,
                         overheal,
                         is_crit,
@@ -171,7 +173,7 @@ def _get_heals(code, start=0, end=None, names=None, for_player=None):
     return heals, periodics, absorbs
 
 
-def get_heals(code, start=None, end=None, name=None, **_):
+def get_heals(code, start=None, end=None, character_name=None, **_):
     """
     Gets heal events for specified log code.
 
@@ -191,10 +193,10 @@ def get_heals(code, start=None, end=None, name=None, **_):
         fight_data = get_fights(code)
         end = fight_data["end"] - fight_data["start"]
 
-    return _get_heals(code, start, end, names, for_player=name)
+    return _get_heals(code, start, end, names, for_player=character_name)
 
 
-if __name__ == "__main__":
+def _test_code():
     import argparse
     parser = argparse.ArgumentParser("Tests the api reading code.")
 
@@ -202,7 +204,7 @@ if __name__ == "__main__":
     parser.add_argument("-n", "--name")
 
     args = parser.parse_args()
-    heals, periodics, absorbs = get_heals(args.code, name=args.name)
+    heals, periodics, absorbs = get_heals(args.code, character_name=args.name)
 
     print("Heals")
     for h in heals[:20]:
@@ -215,3 +217,7 @@ if __name__ == "__main__":
     print("Absorbs")
     for h in absorbs[:20]:
         print("  ", *h)
+
+
+if __name__ == "__main__":
+    _test_code()

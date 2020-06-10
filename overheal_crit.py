@@ -45,6 +45,8 @@ def process_spell(spell_id, spell_lines):
 
 
 def print_results(data):
+    print()
+
     if len(data) == 0:
         print("No data found.")
         return
@@ -97,7 +99,7 @@ def print_results(data):
 
         print(message)
 
-    print("")
+    print()
     crit_pc = nn_crits / nn_spells
 
     spell_name = "Overall / Average"
@@ -125,6 +127,7 @@ def print_results(data):
     message += f", 1% crit gives {0.01 * crit_uh:+4.1f} healing eq to {eq_h:+5.1f} h ({eq_h_0c:+5.1f} at 0% crit)."
 
     print(message)
+    print()
 
 
 def overheal_crit(source, character_name, spell_id=None, **kwargs):

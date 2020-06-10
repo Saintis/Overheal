@@ -4,6 +4,7 @@ import pytest
 
 python = "python3"
 log_file = "tests/test_log.txt"
+wcl_report = "https://classic.warcraftlogs.com/reports/xtj2mVgQXFp4n9RT"
 character = "Saintis"
 
 
@@ -32,12 +33,53 @@ def test_overheal_table(script_runner):
 
 
 @pytest.mark.script_launch_mode('subprocess')
+def test_overheal_table_api(script_runner):
+    ret = script_runner.run(python, "overheal_table.py", wcl_report, character)
+    assert ret.success
+    assert ret.stderr == ""
+
+    assert ret.stdout == """\
+Fetching data from WCL...
+[>                                                                     ]    0%         0 /  3500005
+[======>                                                               ]    9%    309870 /  3500005
+[======================>                                               ]   33%   1148517 /  3500005
+[=================================>                                    ]   47%   1658934 /  3500005
+[==============================================>                       ]   66%   2314662 /  3500005
+[========================================================>             ]   81%   2828287 /  3500005
+[===================================================================>  ]   97%   3394592 /  3500005
+[======================================================================]  100%   3500005 /  3500005
+Unknown coefficient for spell 15701, https://classic.wowhead.com/spell=15701
+   id  Spell name                     #H    No OH   Any OH  Half OH  Full OH    % OHd
+ 6063  Heal (Rank 3)                  70    40.0%    60.0%    25.7%    10.0%    33.0%
+10917  Flash Heal (Rank 7)            16    87.5%    12.5%     6.2%     6.2%     7.0%
+10963  Greater Heal (Rank 2)          58    31.0%    69.0%    41.4%    10.3%    38.0%
+ 2061  Flash Heal (Rank 1)            45    62.2%    37.8%    28.9%     6.7%    25.3%
+ 2053  Lesser Heal (Rank 3)            1   100.0%     0.0%     0.0%     0.0%     0.0%
+10965  Greater Heal (Rank 4)          13    30.8%    69.2%    38.5%    15.4%    46.8%
+ 9474  Flash Heal (Rank 4)             2   100.0%     0.0%     0.0%     0.0%     0.0%
+Unknown name for spell 15701, https://classic.wowhead.com/spell=15701
+15701  [Spell 15701]                   1     0.0%   100.0%   100.0%   100.0%   100.0%
+27805  Holy Nova (Rank 6)              2    50.0%    50.0%     0.0%     0.0%     1.0%
+  596  Prayer of Healing (Rank 1)      6    50.0%    50.0%    33.3%    16.7%    35.0%
+10961  Prayer of Healing (Rank 4)      6    50.0%    50.0%    50.0%    33.3%    45.6%
+-------------------------------------------------------------------------------------
+       Total Spell                   220    46.4%    53.6%    30.5%    10.5%    34.2%
+
+   id  Periodic name                  #H    No OH   Any OH  Half OH  Full OH    % OHd
+10929  Renew (Rank 9)                 28    53.6%    46.4%    35.7%    32.1%    39.2%
+-------------------------------------------------------------------------------------
+       Total Periodic                 28    53.6%    46.4%    35.7%    32.1%    39.2%
+"""
+
+
+@pytest.mark.script_launch_mode('subprocess')
 def test_overheal_crit(script_runner):
     ret = script_runner.run(python, "overheal_crit.py", log_file, character)
     assert ret.success
     assert ret.stderr == ""
 
     assert ret.stdout == """\
+
 Crits:
   Flash Heal (Rank 1)           :   3 /  18 crits (16.7%); (17.5% OH), Crit H:  268 ( 111 +  157 oh)  (58.7% oh), 1% crit gives +1.1 healing eq to  +2.4 h ( +2.6 at 0% crit).
   Flash Heal (Rank 4)           :   0 /   5 crits ( 0.0%); ( 0.1% OH)
@@ -47,6 +89,7 @@ Crits:
   Lesser Heal (Rank 3)          :   0 /   1 crits ( 0.0%); ( 0.0% OH)
 
   Overall / Average             :   8 /  52 crits (15.4%); (22.5% OH), Crit H:  465 ( 199 +  265 oh)  (57.1% oh), 1% crit gives +2.0 healing eq to  +3.1 h ( +3.4 at 0% crit).
+
 """
 
 

@@ -87,7 +87,7 @@ def plot_oh_prob(
 
 def spell_overheal_probability(player_name, spell_id, lines, spell_power=None, path=None):
     """Plots overheal probability of each spell"""
-    if spell_power is None:
+    if spell_power is None or spell_power <= 0:
         sp_neg = 400.0
         sp_shift = 0.0
         sp_extrap = 200.0
