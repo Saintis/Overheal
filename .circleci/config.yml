@@ -22,7 +22,7 @@ jobs:
           paths:
             - "venv"
       - run:
-          command: ./manage.py test
+          command: pytest
           name: Test
 
 workflows:
