@@ -15,14 +15,14 @@ jobs:
       - run:
           command: |
             sudo pip install pipenv
-            pipenv install
+            pipenv install --dev
 #      - python/save-cache
       - save_cache: # cache Python dependencies using checksum of Pipfile as the cache-key
           key: deps9-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
           paths:
             - "venv"
       - run:
-          command: pytest
+          command: pipenv run pytest
           name: Test
 
 workflows:
