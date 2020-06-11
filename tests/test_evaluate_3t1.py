@@ -10,9 +10,12 @@ def test_evaluate_3t1(script_runner):
     assert ret.success
     assert ret.stderr == ""
 
-    assert ret.stdout == """\
+    assert (
+        ret.stdout
+        == """\
 Evaluation of 3T1  (Onyxia, 253s)
   Used Flash Heal 38 times.
-  Found 5 back-to-back casts (within 0.1s).
-  3T1 is worth 0.5s of casting.
+  Found 5 back-to-back casts after a Flash Heal (within 0.1s) (13.2%).
+  3T1 is potentially worth 0.5s of casting (0 more Flash Heals).
 """
+    )

@@ -351,12 +351,7 @@ SPELL_MANA = {
 }
 
 # fmt: on
-warning_list = dict(
-    name=[],
-    coef=[],
-    heal=[],
-    mana=[],
-)
+warning_list = dict(name=[], coef=[], heal=[], mana=[])
 
 
 def spell_name(spell_id, warn_on_not_found=True):

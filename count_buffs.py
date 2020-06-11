@@ -56,9 +56,7 @@ def aggregate_buff_lines(res_lines, buff_lines, dispel_lines):
     buff_data = {}
     dispel_data = {}
 
-    for lines, data in zip(
-        (res_lines, buff_lines, dispel_lines), (res_data, buff_data, dispel_data)
-    ):
+    for lines, data in zip((res_lines, buff_lines, dispel_lines), (res_data, buff_data, dispel_data)):
         for spell_id, spell_name, source, target in lines:
             if spell_id not in data:
                 data[spell_id] = {}
@@ -90,7 +88,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Analyses logs and count up number of buffs and resurrections cast by each player.",
+        description="Analyses logs and count up number of buffs and resurrections cast by each player."
     )
 
     parser.add_argument("log_file", help="Path to the log file to analyse")

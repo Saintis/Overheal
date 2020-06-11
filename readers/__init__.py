@@ -14,10 +14,12 @@ def read_heals(source, **kwargs):
         code = source.split("#")[0].split("/")[-1]
 
         import readers.read_from_api as api
+
         heals, periodics, absorbs = api.get_heals(code, **kwargs)
     elif ".txt" in source:
 
         import readers.read_from_raw as raw
+
         log_lines = raw.get_lines(source)
         heals, periodics = raw.get_heals(log_lines, **kwargs)
         absorbs = []
@@ -26,6 +28,7 @@ def read_heals(source, **kwargs):
         code = source
 
         import readers.read_from_api as api
+
         heals, periodics, absorbs = api.get_heals(code, **kwargs)
 
     return heals, periodics, absorbs

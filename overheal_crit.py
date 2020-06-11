@@ -78,9 +78,7 @@ def print_results(data):
         crit_pc = n_crits / n_spells
         crit_pc_str = f"{crit_pc:5.1%}" if crit_pc < 1.0 else "100.%"
 
-        message = (
-            f"  {spell_name:<30s}:{n_crits:4d} /{n_spells:4d} crits ({crit_pc_str}); ({ohh / hh:5.1%} OH)"
-        )
+        message = f"  {spell_name:<30s}:{n_crits:4d} /{n_spells:4d} crits ({crit_pc_str}); ({ohh / hh:5.1%} OH)"
 
         if n_crits == 0:
             print(message)
@@ -105,9 +103,7 @@ def print_results(data):
     spell_name = "Overall / Average"
     coef = s_coef / nn_crits
 
-    message = (
-        f"  {spell_name:<30s}:{nn_crits:4d} /{nn_spells:4d} crits ({crit_pc:5.1%}); ({t_oh / t_hh:5.1%} OH)"
-    )
+    message = f"  {spell_name:<30s}:{nn_crits:4d} /{nn_spells:4d} crits ({crit_pc:5.1%}); ({t_oh / t_hh:5.1%} OH)"
 
     if nn_crits == 0:
         print(message)
@@ -164,8 +160,8 @@ def main(argv=None):
 
     parser = OverhealParser(
         description="Analyses log and estimates healing of crits. Counts up the healing and overhealing done by each "
-                    "found crit. Prints out extra healing done by each crit on average and the equivalent +heal worth "
-                    "for each spell, and for the average spell profile over the whole combat log.",
+        "found crit. Prints out extra healing done by each crit on average and the equivalent +heal worth "
+        "for each spell, and for the average spell profile over the whole combat log.",
         need_character=True,
         accept_spell_id=True,
     )

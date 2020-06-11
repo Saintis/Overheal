@@ -192,18 +192,14 @@ def group_lines_for_spell(spell_id, lines, spell_powers):
         nn_overheals.append(n_oh / n_h)
         nn_full_overheals.append(n_f_oh / n_h)
 
-    return total_heals, total_overheals, total_underheals, count_heals, nn_underheals, nn_overheals, nn_full_overheals
+    return (total_heals, total_overheals, total_underheals, count_heals, nn_underheals, nn_overheals, nn_full_overheals)
 
 
-def overheal_plot(
-    source, character_name, ignore_crit=False, spell_id=None, spell_power=None, path=None, **kwargs
-):
+def overheal_plot(source, character_name, ignore_crit=False, spell_id=None, spell_power=None, path=None, **kwargs):
     heal_lines, periodic_lines, absorbs = read_heals(source, character_name=character_name, spell_id=spell_id, **kwargs)
 
     # Group lines
-    heal_lines = group_processed_lines(
-        heal_lines + periodic_lines, ignore_crit, spell_id=spell_id
-    )
+    heal_lines = group_processed_lines(heal_lines + periodic_lines, ignore_crit, spell_id=spell_id)
 
     if spell_power is None:
         sp_neg = 400.0
@@ -242,17 +238,22 @@ def main(argv=None):
         % OHd: Percentage of heal values that were overheal, same overheal percentage shown in WarcraftLogs. """,
         need_character=True,
         accept_spell_id=True,
-        accept_spell_power=True
+        accept_spell_power=True,
     )
 
-    parser.add_argument(
-        "--ignore_crit", action="store_true", help="Remove critical heals from analysis"
-    )
+    parser.add_argument("--ignore_crit", action="store_true", help="Remove critical heals from analysis")
     parser.add_argument("--path")
 
     args = parser.parse_args(argv)
 
-    overheal_plot(args.source, args.character_name, spell_id=args.spell_id, spell_power=args.spell_power, ignore_crit=args.ignore_crit, path=args.path)
+    overheal_plot(
+        args.source,
+        args.character_name,
+        spell_id=args.spell_id,
+        spell_power=args.spell_power,
+        ignore_crit=args.ignore_crit,
+        path=args.path,
+    )
 
 
 if __name__ == "__main__":

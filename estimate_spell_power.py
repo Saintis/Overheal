@@ -68,14 +68,7 @@ def process_spell(spell_id, spell_lines, heal_increase=0.0):
     return est_plus_heal, n_heals, n_crits
 
 
-def estimate_spell_power(
-    player,
-    source,
-    spell_id=None,
-    spiritual_healing=0,
-    improved_renew=0,
-    **kwargs,
-):
+def estimate_spell_power(player, source, spell_id=None, spiritual_healing=0, improved_renew=0, **kwargs):
     heal_lines, periodic_lines, _ = read_heals(player, source, spell_id=spell_id, **kwargs)
 
     # Group lines
@@ -98,9 +91,7 @@ def estimate_spell_power(
         estimates = []
 
         for spell_id, lines in heal_lines.items():
-            est_plus_heal, n_heals, n_crits = process_spell(
-                spell_id, lines, heal_increase=spell_inc
-            )
+            est_plus_heal, n_heals, n_crits = process_spell(spell_id, lines, heal_increase=spell_inc)
             nn_heals += n_heals
             nn_crits += n_crits
             estimates.append(est_plus_heal)
@@ -121,15 +112,9 @@ if __name__ == "__main__":
         accept_spell_id=True,
     )
 
-    parser.add_argument(
-        "--sh", type=int, help="Levels of Spirital Healing to guess", default=0
-    )
-    parser.add_argument(
-        "--ir", type=int, help="Levels of Improved Renew to guess", default=0
-    )
+    parser.add_argument("--sh", type=int, help="Levels of Spirital Healing to guess", default=0)
+    parser.add_argument("--ir", type=int, help="Levels of Improved Renew to guess", default=0)
 
     args = parser.parse_args()
 
-    estimate_spell_power(
-        **vars(args)
-    )
+    estimate_spell_power(**vars(args))

@@ -89,7 +89,7 @@ class RawProcessor:
         gross_heal = int(line_parts[29])
         overheal = int(line_parts[30])
 
-        is_crit = ("1" in line_parts[32])
+        is_crit = "1" in line_parts[32]
 
         p_line = (timestamp, source, spell_id, target, health_pct, gross_heal, overheal, is_crit)
 
@@ -159,7 +159,7 @@ def _process_line(parts, ref_time=None):
     total_heal = int(parts[29])
     overheal = int(parts[30])
 
-    is_crit = ("1" in parts[32])
+    is_crit = "1" in parts[32]
 
     return (time_stamp, source, spell_id, target, total_heal, overheal, is_crit)
 
@@ -176,9 +176,7 @@ def get_lines(log_file):
         lines = fh.readlines()
     except FileNotFoundError:
         print(f"Could not find `{log_file}`!")
-        print(
-            f"Looking in `{os.getcwd()}`, please double check your log file is there."
-        )
+        print(f"Looking in `{os.getcwd()}`, please double check your log file is there.")
         exit(1)
 
     return lines

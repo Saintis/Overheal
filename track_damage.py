@@ -32,7 +32,9 @@ def health_bar_chart(ax, times, deficits, health_start=0):
         deficit0 = deficit
 
 
-def plot_character_damage(times, health_pcts, deficits, health_ests, encounter_time, encounter=None, character_name=None, path=None):
+def plot_character_damage(
+    times, health_pcts, deficits, health_ests, encounter_time, encounter=None, character_name=None, path=None
+):
     if path is None:
         path = "figs/damage"
 
@@ -146,7 +148,16 @@ def track_character_damage(source, character_name, encounter_i=0, verbose=False,
         health_ests.append(health_est)
 
     encounter_time = (encounter_end - encounter_start).total_seconds()
-    plot_character_damage(times, health_pcts, deficits, health_ests, encounter_time, encounter=encounter, character_name=character_name, **kwargs)
+    plot_character_damage(
+        times,
+        health_pcts,
+        deficits,
+        health_ests,
+        encounter_time,
+        encounter=encounter,
+        character_name=character_name,
+        **kwargs,
+    )
 
 
 def track_raid_damage(source, encounter_i=0, verbose=False, **kwargs):
@@ -231,10 +242,7 @@ def track_raid_damage(source, encounter_i=0, verbose=False, **kwargs):
 def main(argv=None):
     from backend.parser import OverhealParser
 
-    parser = OverhealParser(
-        need_character=True,
-        accept_encounter=True
-    )
+    parser = OverhealParser(need_character=True, accept_encounter=True)
     parser.add_argument("--raid", action="store_true")
     parser.add_argument("-v", "--verbose", action="store_true", help="Increases verbosity, saves health data.")
     parser.add_argument("--path")

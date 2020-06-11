@@ -13,9 +13,7 @@ import spell_data as sd
 
 def print_spell_aggregate(spell_id, name, data):
     """Prints aggregate information for single spell."""
-    heals, any_overheals, half_overheals, full_overheals, amount_healed, amount_overhealed = (
-        data
-    )
+    heals, any_overheals, half_overheals, full_overheals, amount_healed, amount_overhealed = data
     under_heals = heals - any_overheals
 
     print(
@@ -136,12 +134,9 @@ def main(argv=None):
         Full OH: Percentage of heals that overhealed for at least 90% of the heal value.
         % OHd: Percentage of heal values that were overheal, same overheal percentage shown in WarcraftLogs. """,
         need_character=True,
-
     )
 
-    parser.add_argument(
-        "--ignore_crit", action="store_true", help="Remove critical heals from analysis"
-    )
+    parser.add_argument("--ignore_crit", action="store_true", help="Remove critical heals from analysis")
 
     args = parser.parse_args(argv)
 

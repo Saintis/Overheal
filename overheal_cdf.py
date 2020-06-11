@@ -110,7 +110,7 @@ def main():
         description="Analyses logs and gives overheal cdf.",
         need_character=True,
         accept_spell_id=True,
-        accept_spell_power=True
+        accept_spell_power=True,
     )
     parser.add_argument("--path", help="Path to output figures too.", default="figs/cdf")
     args = parser.parse_args()

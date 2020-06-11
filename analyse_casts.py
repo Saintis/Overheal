@@ -10,11 +10,7 @@ import json
 
 from readers import read_from_raw as raw
 from backend.parser import OverhealParser
-from backend import (
-    get_player_name,
-    get_time_stamp,
-    encounter_picker
-)
+from backend import get_player_name, get_time_stamp, encounter_picker
 import spell_data as sd
 
 
@@ -168,16 +164,7 @@ def get_casts(log_lines):
                 and success_time <= heal_time + timedelta(seconds=0.1)
             ):
                 # found a match
-                full_heal = (
-                    source,
-                    start_time,
-                    success_time,
-                    heal_time,
-                    batch_i,
-                    spell_id,
-                    target,
-                    net_heal,
-                )
+                full_heal = (source, start_time, success_time, heal_time, batch_i, spell_id, target, net_heal)
                 full_heal_data.append(full_heal)
 
                 casts[source].remove(c)
@@ -228,10 +215,7 @@ def plot_casts(casts_dict, encounter=None, start=None, end=None, mark=None, anon
                     spell_tag = spell_name_parts[1][:-1]
                     color = "#b3b3b3" if even else "#cccccc"
                 elif "(" in spell_name:
-                    spell_tag = (
-                        "".join([k[0] for k in spell_name_parts[:-2]])
-                        + spell_name_parts[-1][:-1]
-                    )
+                    spell_tag = "".join([k[0] for k in spell_name_parts[:-2]]) + spell_name_parts[-1][:-1]
                 else:
                     spell_tag = "".join([k[0] for k in spell_name_parts])
 
@@ -317,8 +301,7 @@ def analyse_activity(casts_dict, encounter, encounter_start, encounter_end):
     combat_time = (encounter_end - encounter_start).total_seconds()
     print(f"Activity for {encounter}, {combat_time:.1f}s")
 
-    print(
-        f"  {'Healer':<12s}  {'setup'}  {'activ'}  {'act %'}  {'inact'}  {'regen'}")
+    print(f"  {'Healer':<12s}  {'setup'}  {'activ'}  {'act %'}  {'inact'}  {'regen'}")
 
     for healer in HEALERS:
         end = encounter_start
@@ -359,8 +342,10 @@ def analyse_activity(casts_dict, encounter, encounter_start, encounter_end):
 
         active_time = combat_time - inactive_time
         active_pct = active_time / combat_time
-        print(f"  {healer:<12s}  {setup_time:5.1f}  {active_time:5.1f}  {active_pct:5.1%}  {inactive_time:5.1f}  "
-              f"{regen_time:5.1f}")
+        print(
+            f"  {healer:<12s}  {setup_time:5.1f}  {active_time:5.1f}  {active_pct:5.1%}  {inactive_time:5.1f}  "
+            f"{regen_time:5.1f}"
+        )
 
 
 def analyse_casts(source, encounter=None, **kwargs):
@@ -390,7 +375,7 @@ def analyse_casts(source, encounter=None, **kwargs):
 def main(argv=None):
     parser = OverhealParser(
         description="Analyses a boss encounter, or whole combat log, and characterise the amount of heal sniping going "
-                    "on. Only accepts WoWCombatLog.txt currently.",
+        "on. Only accepts WoWCombatLog.txt currently.",
         need_character=False,
         accept_encounter=True,
     )
@@ -398,9 +383,7 @@ def main(argv=None):
         "--mark",
         help="Time-stamp to mark with a line, good for tracking important events, such as the death of a tank.",
     )
-    parser.add_argument(
-        "--anonymize", action="store_true", help="Anonymizes names for distribution."
-    )
+    parser.add_argument("--anonymize", action="store_true", help="Anonymizes names for distribution.")
 
     args = parser.parse_args(argv)
 

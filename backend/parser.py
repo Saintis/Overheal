@@ -9,13 +9,15 @@ import argparse
 class OverhealParser(argparse.ArgumentParser):
     """Default setup for an arg parser for Overheal scripts."""
 
-    def __init__(self, *, need_character=False, accept_spell_id=False, accept_spell_power=False, accept_encounter=False, **kwargs):
+    def __init__(
+        self, *, need_character=False, accept_spell_id=False, accept_spell_power=False, accept_encounter=False, **kwargs
+    ):
         super().__init__(**kwargs)
 
         self.add_argument(
             "source",
             help="Data source, either path to the .txt log file to analyse, link to a Warcraftlog report or the WCL "
-                 "report code."
+            "report code.",
         )
 
         if need_character:
@@ -39,5 +41,5 @@ class OverhealParser(argparse.ArgumentParser):
                 "--encounter",
                 type=int,
                 help="The encounter index to pick directly. Bypasses the encounter selection menu. Pass a 0 for all "
-                     "encounters."
+                "encounters.",
             )

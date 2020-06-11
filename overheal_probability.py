@@ -14,15 +14,7 @@ import spell_data as sd
 
 
 def plot_oh_prob(
-    player_name,
-    spell_id,
-    spell_powers,
-    sp_extrap,
-    sp_shift,
-    n_heals,
-    n_overheals,
-    n_overheals_nc,
-    path=None,
+    player_name, spell_id, spell_powers, sp_extrap, sp_shift, n_heals, n_overheals, n_overheals_nc, path=None
 ):
     if path is None:
         path = "figs/probability"
@@ -48,9 +40,7 @@ def plot_oh_prob(
     plt.plot(spell_powers + sp_shift, oh_p, label=f"All heals")
 
     p = np.polyfit(spell_powers[:ii], oh_p_nc[:ii], 1)
-    plt.plot(
-        e_sp + sp_shift, np.polyval(p, e_sp), "r--", label="Extrapolation, no crits"
-    )
+    plt.plot(e_sp + sp_shift, np.polyval(p, e_sp), "r--", label="Extrapolation, no crits")
     plt.plot(spell_powers + sp_shift, oh_p_nc, label=f"No crits")
 
     plt.title(f"Overheal probability of {sd.spell_name(spell_id)}, (N={ns})")
@@ -152,15 +142,7 @@ def spell_overheal_probability(player_name, spell_id, lines, spell_power=None, p
 
     # plot probabilities
     plot_oh_prob(
-        player_name,
-        spell_id,
-        spell_powers,
-        sp_extrap,
-        sp_shift,
-        n_heals,
-        n_overheals,
-        n_overheals_nc,
-        path=path,
+        player_name, spell_id, spell_powers, sp_extrap, sp_shift, n_heals, n_overheals, n_overheals_nc, path=path
     )
 
 
@@ -185,17 +167,19 @@ def main(argv=None):
         accept_spell_power=True,
     )
 
-    parser.add_argument(
-        "--ignore_crit", action="store_true", help="Remove critical heals from analysis"
-    )
-    parser.add_argument(
-        "--path"
-    )
+    parser.add_argument("--ignore_crit", action="store_true", help="Remove critical heals from analysis")
+    parser.add_argument("--path")
 
     args = parser.parse_args(argv)
 
-    overheal_probability(args.source, args.character_name,
-                         spell_id=args.spell_id, spell_power=args.spell_power, ignore_crit=args.ignore_crit, path=args.path)
+    overheal_probability(
+        args.source,
+        args.character_name,
+        spell_id=args.spell_id,
+        spell_power=args.spell_power,
+        ignore_crit=args.ignore_crit,
+        path=args.path,
+    )
 
 
 if __name__ == "__main__":

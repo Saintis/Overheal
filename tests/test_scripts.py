@@ -13,7 +13,9 @@ def test_overheal_table(script_runner):
     assert ret.success
     assert ret.stderr == ""
 
-    assert ret.stdout == """\
+    assert (
+        ret.stdout
+        == """\
    id  Spell name                     #H    No OH   Any OH  Half OH  Full OH    % OHd
 10917  Flash Heal (Rank 7)            15    60.0%    40.0%    26.7%    13.3%    25.1%
  2055  Heal (Rank 2)                   5     0.0%   100.0%    20.0%    20.0%    38.8%
@@ -29,6 +31,7 @@ def test_overheal_table(script_runner):
 -------------------------------------------------------------------------------------
        Total Periodic                  5    80.0%    20.0%    20.0%    20.0%    20.0%
 """
+    )
 
 
 def test_overheal_table_api(script_runner):
@@ -36,7 +39,9 @@ def test_overheal_table_api(script_runner):
     assert ret.success
     assert ret.stderr == ""
 
-    assert ret.stdout == """\
+    assert (
+        ret.stdout
+        == """\
 Fetching healing events from WCL...
 [>                                                                     ]    0%         0 /  3500005
 [======>                                                               ]    9%    309870 /  3500005
@@ -68,6 +73,7 @@ Unknown name for spell 15701, https://classic.wowhead.com/spell=15701
 -------------------------------------------------------------------------------------
        Total Periodic                 28    53.6%    46.4%    35.7%    32.1%    39.2%
 """
+    )
 
 
 def test_overheal_crit(script_runner):
@@ -75,7 +81,9 @@ def test_overheal_crit(script_runner):
     assert ret.success
     assert ret.stderr == ""
 
-    assert ret.stdout == """\
+    assert (
+        ret.stdout
+        == """\
 
 Crits:
   Flash Heal (Rank 1)           :   3 /  18 crits (16.7%); (17.5% OH), Crit H:  268 ( 111 +  157 oh)  (58.7% oh), 1% crit gives +1.1 healing eq to  +2.4 h ( +2.6 at 0% crit).
@@ -88,6 +96,7 @@ Crits:
   Overall / Average             :   8 /  52 crits (15.4%); (22.5% OH), Crit H:  465 ( 199 +  265 oh)  (57.1% oh), 1% crit gives +2.0 healing eq to  +3.1 h ( +3.4 at 0% crit).
 
 """
+    )
 
 
 def test_overheal_cdf(script_runner, tmpdir):

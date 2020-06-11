@@ -71,9 +71,7 @@ def overheal_summary(source, character_name, spell_power, path=None, show=False)
     for spell_id, lines in heal_lines.items():
         labels.append(sd.spell_name(spell_id))
 
-        data = process_spell(
-            spell_id, lines, spell_power
-        )
+        data = process_spell(spell_id, lines, spell_power)
 
         if not data:
             continue
@@ -87,9 +85,7 @@ def overheal_summary(source, character_name, spell_power, path=None, show=False)
 
     for spell_id, lines in periodic_lines.items():
         labels.append(sd.spell_name(spell_id))
-        data = process_spell(
-            spell_id, lines, spell_power
-        )
+        data = process_spell(spell_id, lines, spell_power)
 
         if not data:
             continue
@@ -115,20 +111,8 @@ def overheal_summary(source, character_name, spell_power, path=None, show=False)
 
     plt.figure(figsize=(8, 6), constrained_layout=True)
     plt.bar(labels, nn_underheal, color="green", label="Underheal")
-    plt.bar(
-        labels,
-        nn_drop_h,
-        color="yellow",
-        bottom=b0,
-        label="Partial OH, less than +heal",
-    )
-    plt.bar(
-        labels,
-        nn_downrank,
-        color="orange",
-        bottom=b1,
-        label="Partial OH, more than +heal",
-    )
+    plt.bar(labels, nn_drop_h, color="yellow", bottom=b0, label="Partial OH, less than +heal")
+    plt.bar(labels, nn_downrank, color="orange", bottom=b1, label="Partial OH, more than +heal")
     plt.bar(labels, nn_overheal, color="red", bottom=b2, label="Full overheal")
 
     plt.ylabel("Fraction of casts")
@@ -147,9 +131,7 @@ def main(argv=None):
     from backend.parser import OverhealParser
 
     parser = OverhealParser(
-        description="Analyses logs and gives summary plot.",
-        need_character=True,
-        accept_spell_power=True,
+        description="Analyses logs and gives summary plot.", need_character=True, accept_spell_power=True
     )
     parser.add_argument("--path")
     parser.add_argument("--show", action="store_true")

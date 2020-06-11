@@ -157,18 +157,7 @@ def _get_heals(code, start=0, end=None, names=None, for_player=None):
 
                 is_crit = e.get("hitType", 1) == 2
 
-                heals.append(
-                    (
-                        timestamp,
-                        source,
-                        spell_id,
-                        target,
-                        hitpoints,
-                        amount + overheal,
-                        overheal,
-                        is_crit,
-                    )
-                )
+                heals.append((timestamp, source, spell_id, target, hitpoints, amount + overheal, overheal, is_crit))
             except Exception as ex:
                 print("Exception while handling line", e)
                 print(ex)
@@ -239,18 +228,7 @@ def _get_damage(code, start=0, end=None, names=None, for_player=None):
                     # ignore attacks that do no damage
                     continue
 
-                damage.append(
-                    (
-                        timestamp,
-                        source,
-                        0,
-                        target,
-                        hitpoints,
-                        -(amount + mitigated),
-                        -mitigated,
-                        -overkill,
-                    )
-                )
+                damage.append((timestamp, source, 0, target, hitpoints, -(amount + mitigated), -mitigated, -overkill))
             except Exception as ex:
                 print("Exception while handling line", e)
                 print(ex)
@@ -335,6 +313,7 @@ def get_heals_and_damage(code, start=None, end=None, character_name=None, **_):
 
 def _test_code():
     import argparse
+
     parser = argparse.ArgumentParser("Tests the api reading code.")
 
     parser.add_argument("code")

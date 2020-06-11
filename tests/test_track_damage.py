@@ -13,7 +13,9 @@ def test_track_damage_raid(script_runner, tmpdir):
     assert ret.success
     assert ret.stderr == ""
 
-    assert ret.stdout == """\
+    assert (
+        ret.stdout
+        == """\
 0.0 0
 2.996 0
 3.373 -811
@@ -1208,6 +1210,7 @@ def test_track_damage_raid(script_runner, tmpdir):
 251.576 -27760
 251.576 -28380
 """
+    )
     _, _, filenames = next(os.walk(tmpdir))
 
     assert len(filenames) == 1
@@ -1221,7 +1224,9 @@ def test_track_damage_character(script_runner, tmpdir):
     assert ret.success
     assert ret.stderr == ""
 
-    assert ret.stdout == """\
+    assert (
+        ret.stdout
+        == """\
 162.518 -2009
 174.245 -774
 178.01 0
@@ -1232,6 +1237,7 @@ def test_track_damage_character(script_runner, tmpdir):
 192.893 0
 192.893 0
 """
+    )
     _, _, filenames = next(os.walk(tmpdir))
 
     assert len(filenames) == 1

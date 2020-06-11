@@ -35,7 +35,7 @@ def process_row(row):
         return None
 
     heal = heal_part.text
-    crit = ("*" in heal)
+    crit = "*" in heal
     heal = int(heal.strip("+").strip("*"))
 
     overheal_part = row.find("span", style="color: #ff8")
