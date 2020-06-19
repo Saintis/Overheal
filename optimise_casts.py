@@ -15,7 +15,7 @@ import spell_data as sd
 
 
 CharacterData = namedtuple("CharacterData", ("h", "a", "mp5", "mp5ooc", "mana"))
-PendingHeal = namedtuple("PendingHeal", ("target", "heal", "mana", "finished_time"))
+PendingHeal = namedtuple("PendingHeal", ("target", "heal", "mana"))
 
 
 def pick_heal_target(deficits, applied_heals):
@@ -94,12 +94,6 @@ def optimise_casts(character_name, times, deficits_time, name_dict, character_da
     # dictionary of applied heals for characters
     applied_heals = dict()
 
-    heals = [0]
-    heal_times = [0]
-
-    manas = [available_mana]
-    mana_times = [0]
-
     total_healing = 0
     regen_mana = 0
     casts = 0
@@ -115,28 +109,23 @@ def optimise_casts(character_name, times, deficits_time, name_dict, character_da
     if spell_id:
         print(f"Using {sd.spell_name(spell_id)}")
 
-    deficits = deficits_time[0]
+    times = iter(times)
+    deficits_time = iter(deficits_time)
 
-    for time, n_deficits in zip(times, deficits_time):
-        dtime = time - last_time
+    deficits = next(deficits_time)
+    next_deficit_time = next(times)
+    last_finish_time = -5.0
+    finish_time = 0.0
 
-        # ignore mana ticks for now, just regen continuously
-        # handle potential regen if ooc time
-        d_cast_time = time - last_cast
-        if d_cast_time > 5.0:
-            # ooc regen
-            regen = dtime * character_data.mp5ooc / 5
-        else:
-            regen = dtime * character_data.mp5 / 5
+    ticks = []
+    heals = []
+    manas = []
 
-        missing_mana = character_data.mana - available_mana
-        regen = min(regen, missing_mana)
-
-        # simplify mana regen to be constant, and not in 2s batches
-        available_mana += regen
-        regen_mana += regen
-
-        if time >= next_time:
+    time_step = 0.1
+    time = 0.0
+    while time < encounter_time:
+        if time >= finish_time:
+            # process heal and/or start new heal
             if pending_heal:
                 # apply heal
                 target_id = pending_heal.target
@@ -149,25 +138,24 @@ def optimise_casts(character_name, times, deficits_time, name_dict, character_da
 
                 applied_heal = applied_heals.get(target_id, 0)
 
+                # heals even if target died
                 deficit = min(0, deficits.get(target_id, 0) + applied_heal)
                 net = min(-deficit, heal)
                 applied_heals[target_id] = applied_heal + net
                 pending_heal = None
 
+                # count cast and add healing and deduct mana
                 casts += 1
                 total_healing += net
                 available_mana -= mana
 
-                last_cast = next_time
+                last_finish_time = finish_time
 
                 if verbose:
                     print(f"  {next_time:4.1f} heal {name_dict[target_id]} ({deficit: 5.0f}) for {net:4.0f}; {total_healing:5.0f}")
 
-                heals.append(total_healing)
-                heal_times.append(next_time)
-
-                manas.append(available_mana)
-                mana_times.append(next_time)
+            # min wait time is 0.2s
+            finish_time = time + time_step
 
             # able to cast again
             target_id, deficit = pick_heal_target(deficits, applied_heals)
@@ -180,29 +168,43 @@ def optimise_casts(character_name, times, deficits_time, name_dict, character_da
                 if heal > 0:
                     if verbose:
                         print(f"  {next_time:4.1f} tar  {name_dict[target_id]} ({deficit: 5.0f}) for {heal:4.0f}")
-                    next_time = next_time + cast_time
-                    pending_heal = PendingHeal(target_id, heal, mana, next_time)
-                else:
-                    next_time = time
-            else:
-                next_time = time
+                    finish_time = time + cast_time
+                    pending_heal = PendingHeal(target_id, heal, mana)
 
-        if next_time > time:
-            # Only update mana if we will not have a spell landing soon
-            manas.append(available_mana)
-            mana_times.append(time)
+        ticks.append(time)
+        manas.append(available_mana)
+        heals.append(total_healing)
 
-        deficits = n_deficits
-        last_time = time
+        # get next time
+        next_time = min(time + time_step, finish_time, next_deficit_time, encounter_time)
+        dtime = next_time - time
+        time = next_time
 
-    available_mana += (encounter_time - last_time) * character_data.mp5 / 5
-    available_mana = min(available_mana, character_data.mana)
+        # add mana for elapsed time
+        if next_time - last_finish_time > 5.0:
+            # ooc regen
+            regen = dtime / 5 * character_data.mp5ooc
+        else:
+            regen = dtime / 5 * character_data.mp5
 
+        missing_mana = character_data.mana - available_mana
+        regen = min(regen, missing_mana)
+
+        # simplify mana regen to be constant, and not in 2s batches
+        available_mana += regen
+        regen_mana += regen
+
+        # update deficits if needed
+        if next_time >= next_deficit_time:
+            try:
+                deficits = next(deficits_time)
+                next_deficit_time = next(times)
+            except StopIteration:
+                next_deficit_time = encounter_time + time_step
+
+    ticks.append(encounter_time)
     heals.append(total_healing)
-    heal_times.append(encounter_time)
-
     manas.append(available_mana)
-    mana_times.append(encounter_time)
 
     print()
     print(f"  Total healing: {total_healing:.0f}")
@@ -213,12 +215,12 @@ def optimise_casts(character_name, times, deficits_time, name_dict, character_da
     print(f"  End mana:      {available_mana:.0f}")
 
     if show:
-        plt.step(heal_times, heals, where="post", color="green")
+        plt.step(ticks, heals, where="post", color="green")
         # plt.plot(heal_times, heals, "+", color="orange")
 
         ax = plt.twinx()
-        # ax.step(mana_times, manas, where="post", color="blue")
-        ax.plot(mana_times, manas, "+-", color="blue")
+        ax.step(ticks, manas, where="post", color="blue")
+        # ax.plot(ticks, manas, "+-", color="blue")
         ax.set_axisbelow(True)
         ax.grid(axis="x")
 
