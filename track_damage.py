@@ -164,8 +164,8 @@ def main(argv=None):
     encounter_time = (encounter_end - encounter_start).total_seconds()
 
     if args.raid or args.character_name is None:
-        times, deficits, min_deficits = track_raid_damage(events, verbose=args.verbose)
-        times_nc, deficits_nc, min_deficits = track_raid_damage(
+        times, deficits, _, _, min_deficits = track_raid_damage(events, verbose=args.verbose)
+        times_nc, deficits_nc, _, _, min_deficits = track_raid_damage(
             events, character_name=args.character_name, verbose=args.verbose
         )
         plot_raid_damage(

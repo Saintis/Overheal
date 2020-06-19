@@ -79,19 +79,25 @@ def track_raid_damage(events, character_name=None, verbose=False):
     times = dict(all=[])
     health_pcts = dict(all=[])
     deficits = dict(all=[])
+    deficits_time = []
     health_diffs = dict(all=[])
     health_ests = dict(all=[])
     deficit = dict()
     all_deficit = 0
 
     dead_characters = []
-    death_times = {}
+    death_times = dict()
     min_deficit = 0
     min_deficits = []
+
+    name_dict = dict()
 
     for e in events:
         target = e[3]
         target_id = e[4]
+
+        if target_id not in name_dict:
+            name_dict[target_id] = target
 
         if target_id not in times:
             times[target_id] = []
@@ -173,4 +179,7 @@ def track_raid_damage(events, character_name=None, verbose=False):
 
         min_deficits.append(min_deficit)
 
-    return times, deficits, min_deficits
+        deficit_time = {k: deficit[k] if k not in dead_characters else 0 for k in deficit}
+        deficits_time.append(deficit_time)
+
+    return times, deficits, deficits_time, name_dict, min_deficits
