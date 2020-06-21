@@ -3,7 +3,9 @@ Optimise spell casts to heal damage taken.
 
 By: Filip Gokstorp (Saintis-Dreadmist), 2020
 """
+import os
 from random import random
+import numpy as np
 import matplotlib.pyplot as plt
 
 from collections import namedtuple
@@ -81,12 +83,30 @@ def pick_spell(deficit, mana, h, spell_id=None, talents=None):
     return heal, spell_mana, cast_time
 
 
-# TODO: make this a yield like function for track damage so this can be done while damage is tracked
-def optimise_casts(character_name, times, deficits_time, name_dict, character_data, encounter_time, talents=None, spell_id=None, verbose=False, show=True):
-    # cast heal spells and estimate their effect
-    last_cast = times[0] - 5.0
-    last_time = times[0]
-    next_time = times[0]
+def optimise_casts(character_name, times, deficits_time, name_dict, character_data, encounter_time, talents=None, spell_id=None, verbose=False, show=True, path=None, plot=True):
+    """Evaluate a casting strategy."""
+    if show is True:
+        plot = True
+
+    if path is None:
+        path = "figs/optimise"
+    os.makedirs(path, exist_ok=True)
+
+    print()
+    print(f"  Optimised casts for {character_name}")
+    print()
+
+    print(f"  mana:      {character_data.mana}")
+    print(f"  +heal:     {character_data.h}")
+    print(f"  mp5:       {character_data.mp5}")
+    print(f"  mp5 (ooc): {character_data.mp5ooc}")
+
+    if spell_id:
+        print()
+        print(f"  Using {sd.spell_name(spell_id)}")
+
+    times = iter(times)
+    deficits_time = iter(deficits_time)
 
     available_mana = character_data.mana
     pending_heal = None
@@ -94,28 +114,15 @@ def optimise_casts(character_name, times, deficits_time, name_dict, character_da
     # dictionary of applied heals for characters
     applied_heals = dict()
 
-    total_healing = 0
-    regen_mana = 0
+    total_healing = 0.0
+    regen_mana = 0.0
     casts = 0
-
-    print()
-    print(f"Optimised casts for {character_name}")
-
-    print(f"  Mana:      {character_data.mana}")
-    print(f"  +heal:     {character_data.h}")
-    print(f"  mp5:       {character_data.mp5}")
-    print(f"  mp5 (ooc): {character_data.mp5ooc}")
-
-    if spell_id:
-        print(f"Using {sd.spell_name(spell_id)}")
-
-    times = iter(times)
-    deficits_time = iter(deficits_time)
 
     deficits = next(deficits_time)
     next_deficit_time = next(times)
     last_finish_time = -5.0
     finish_time = 0.0
+    next_time = 0.0
 
     ticks = []
     heals = []
@@ -214,20 +221,35 @@ def optimise_casts(character_name, times, deficits_time, name_dict, character_da
     print(f"  Regen mana:    {regen_mana:.0f}  ({regen_mana / encounter_time * 5:.1f} mp5)")
     print(f"  End mana:      {available_mana:.0f}")
 
-    if show:
-        plt.step(ticks, heals, where="post", color="green")
-        # plt.plot(heal_times, heals, "+", color="orange")
-
-        ax = plt.twinx()
+    if plot:
+        fig, ax = plt.subplots(figsize=(12, 8), constrained_layout=True)
         ax.step(ticks, manas, where="post", color="blue")
         # ax.plot(ticks, manas, "+-", color="blue")
+        ax.set_ylabel("Available mana")
+
+        ax = ax.twinx()
+        ax.step(ticks, heals, where="post", color="green")
+        # ax.plot(heal_times, heals, "+", color="orange")
+        ax.set_ylabel("Net healing")
+
         ax.set_axisbelow(True)
         ax.grid(axis="x")
 
-        if spell_id:
-            ax.set_title(sd.spell_name(spell_id))
+        ax.set_xlabel("Encounter time [s]")
 
-        plt.show()
+        title = f"{total_healing / 1000:.1f}k healing"
+
+        if spell_id:
+            title = sd.spell_name(spell_id) + ", " + title
+
+        ax.set_title(title)
+
+        plt.savefig(f"{path}/{spell_id}.png")
+
+        if show:
+            plt.show()
+
+        plt.close(fig)
 
     return total_healing
 
@@ -246,7 +268,8 @@ def main(argv=None):
     events = data.all_events
 
     # encounter_time = (encounter_end - encounter_start).total_seconds()
-    character_data = CharacterData(800.0, 0.0, 40.0, 200.0, 8000.0)
+    character_data_nc = CharacterData(800.0, 0.0, 40.0, 200.0, 8000.0)
+    character_data_ac = CharacterData(800.0, 1.0, 40.0, 200.0, 8000.0)
 
     times, _, deficits, name_dict, _ = track_raid_damage(
         events, character_name=args.character_name
@@ -276,28 +299,50 @@ def main(argv=None):
         "2055": "Heal (Rank 2)",
         "2054": "Heal (Rank 1)",
     }
-    ths = []
+    lows = []
+    highs = []
+    path = "figs/optimise"
     for sid in sids:
-        th = optimise_casts(args.character_name, times["all"], deficits, name_dict, character_data, encounter_time, spell_id=sid, verbose=False, show=True)
-        ths.append(th)
+
+        th_nc = optimise_casts(args.character_name, times["all"], deficits, name_dict, character_data_nc, encounter_time, spell_id=sid, verbose=False, show=False, plot=False, path=path)
+        th_ac = optimise_casts(args.character_name, times["all"], deficits, name_dict, character_data_ac, encounter_time, spell_id=sid, verbose=False, show=False, plot=False, path=path)
+
+        lows.append(th_nc)
+        highs.append(th_ac)
 
     sids = list(map(lambda s: shorten_spell_name(sd.spell_name(s)), sids))
 
-    fig, ax = plt.subplots(figsize=(12, 8))
-    ax.bar(sids, ths)
+    fig, ax = plt.subplots(figsize=(12, 8), constrained_layout=True)
+
+    ax.bar(sids, lows, color="#33cc33", label="No crit")
+    ax.bar(sids, np.subtract(highs, lows), bottom=lows, color="#85e085", label="All crit")
     ax.grid(axis="y")
     ax.set_axisbelow(True)
+    ax.legend()
 
     # add labels
-    for rect, v in zip(ax.patches, ths):
+    for rect, low, high in zip(ax.patches, lows, highs):
         x = rect.get_x() + rect.get_width() / 2
-        y = rect.get_height() + 200
 
-        ax.text(x, y, f"{v/1000:.1f}k", ha="center", va="bottom")
+        y = low - 300
+        ax.text(x, y, f"{low/1000:.1f}k", ha="center", va="top")
 
-    ax.set_title(f"Spam cast healing for {encounter}")
+        y = high + 200
+        ax.text(x, y, f"{high/1000:.1f}k", ha="center", va="bottom")
 
-    plt.show()
+    character_data_str = str(character_data_nc)
+    ax.set_title(f"Spam cast healing for {encounter}\n{character_data_str}")
+    ax.set_ylabel("Net healing")
+    ax.set_xlabel("Healing strategy")
+
+    plt.savefig(f"{path}/overview.png")
+    # plt.show()
+
+    plt.close(fig)
+
+    h_sid, h_low = max(zip(sids, lows), key=lambda x: x[1])
+    print(f"  Highest healing: {h_sid} with {h_low / 1000:.1f}k healing")
+    print()
 
 
 if __name__ == "__main__":
