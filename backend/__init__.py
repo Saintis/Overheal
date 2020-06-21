@@ -3,13 +3,25 @@ Collection of general functions for managing logs data.
 
 By: Filip Gokstorp (Saintis), 2020
 """
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 ENCOUNTER_START = "ENCOUNTER_START"
 ENCOUNTER_END = "ENCOUNTER_END"
 
 STR_P_TIME = "%m/%d %H:%M:%S.%f"
+
+
+def shorten_spell_name(spell_name):
+    spell_name_parts = spell_name.split()
+    if "[" in spell_name:
+        spell_tag = spell_name_parts[1][:-1]
+    elif "(" in spell_name:
+        spell_tag = "".join([k[0] for k in spell_name_parts[:-2]]) + spell_name_parts[-1][:-1]
+    else:
+        spell_tag = "".join([k[0] for k in spell_name_parts])
+
+    return spell_tag
 
 
 def group_processed_lines(processed_lines, ignore_crit, spell_id=None):
