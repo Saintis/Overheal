@@ -8,7 +8,7 @@ character = "Saintis"
 
 def test_track_damage_raid(script_runner, tmpdir):
     path = tmpdir.strpath
-    ret = script_runner.run(python, "track_damage.py", log_file, character, "-e", "1", "-v", "--path", path, "--raid")
+    ret = script_runner.run(python, "track_damage_taken.py", log_file, character, "-e", "1", "-v", "--path", path, "--raid")
 
     assert ret.success
     assert ret.stderr == ""
@@ -1219,7 +1219,7 @@ def test_track_damage_raid(script_runner, tmpdir):
 
 def test_track_damage_character(script_runner, tmpdir):
     path = tmpdir.strpath
-    ret = script_runner.run(python, "track_damage.py", log_file, character, "-e", "1", "-v", "--path", path)
+    ret = script_runner.run(python, "track_damage_taken.py", log_file, character, "-e", "1", "-v", "--path", path)
 
     assert ret.success
     assert ret.stderr == ""

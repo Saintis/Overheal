@@ -25,10 +25,11 @@ def _get_net_health_change(e, current_deficit):
     return net, overheal, overkill
 
 
-def track_character_damage(events, character_name, verbose=False):
+def character_damage_taken(events, character_name, verbose=False):
     times = []
     health_pcts = []
     deficits = []
+    nets = []
     health_diffs = []
     health_ests = []
     deficit = 0
@@ -43,6 +44,7 @@ def track_character_damage(events, character_name, verbose=False):
 
         net, overheal, _ = _get_net_health_change(e, deficit)
 
+        nets.append(net)
         deficit += net
 
         if overheal:
@@ -71,10 +73,10 @@ def track_character_damage(events, character_name, verbose=False):
         health_diffs.append(net)
         health_ests.append(health_est)
 
-    return times, deficits, health_pcts, health_ests
+    return times, deficits, nets, health_pcts, health_ests
 
 
-def track_raid_damage(events, character_name=None, verbose=False):
+def raid_damage_taken(events, character_name=None, verbose=False):
     # for each character
     times = dict(all=[])
     health_pcts = dict(all=[])

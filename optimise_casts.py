@@ -12,7 +12,7 @@ from collections import namedtuple
 
 from backend import encounter_picker, shorten_spell_name
 from readers import read_from_raw as raw
-from damage.track_damage import track_raid_damage
+from damage.damage_taken import raid_damage_taken
 import spell_data as sd
 
 
@@ -271,7 +271,7 @@ def main(argv=None):
     character_data_nc = CharacterData(800.0, 0.0, 40.0, 200.0, 8000.0)
     character_data_ac = CharacterData(800.0, 1.0, 40.0, 200.0, 8000.0)
 
-    times, _, deficits, name_dict, _ = track_raid_damage(
+    times, _, deficits, name_dict, _ = raid_damage_taken(
         events, character_name=args.character_name
     )
 

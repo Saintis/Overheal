@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 from backend import encounter_picker
 from readers import read_from_raw as raw
-from damage.track_damage import track_raid_damage, track_character_damage
+from damage.damage_taken import raid_damage_taken, character_damage_taken
 
 
 def health_bar_chart(ax, times, deficits, health_start=0):
@@ -24,7 +24,7 @@ def health_bar_chart(ax, times, deficits, health_start=0):
 
 
 def plot_character_damage(
-    times, health_pcts, deficits, health_ests, encounter_time, encounter=None, character_name=None, path=None
+    times, health_pcts, deficits, nets, health_ests, encounter_time, encounter=None, character_name=None, path=None
 ):
     if path is None:
         path = "figs/damage"
@@ -164,8 +164,8 @@ def main(argv=None):
     encounter_time = (encounter_end - encounter_start).total_seconds()
 
     if args.raid or args.character_name is None:
-        times, deficits, _, _, min_deficits = track_raid_damage(events, verbose=args.verbose)
-        times_nc, deficits_nc, _, _, min_deficits = track_raid_damage(
+        times, deficits, _, _, min_deficits = raid_damage_taken(events, verbose=args.verbose)
+        times_nc, deficits_nc, _, _, min_deficits = raid_damage_taken(
             events, character_name=args.character_name, verbose=args.verbose
         )
         plot_raid_damage(
@@ -180,13 +180,14 @@ def main(argv=None):
             resurrections=resurrections,
         )
     else:
-        times, deficits, health_pcts, health_ests = track_character_damage(
+        times, deficits, nets, health_pcts, health_ests = character_damage_taken(
             events, args.character_name, verbose=args.verbose
         )
         plot_character_damage(
             times,
             health_pcts,
             deficits,
+            nets,
             health_ests,
             encounter_time,
             encounter=encounter,
