@@ -94,7 +94,6 @@ class RawProcessor:
         target = get_player_name(line_parts[6])
 
         spell_id = line_parts[9]
-        # spell_name = parts[10]
 
         health_pct = int(line_parts[14])
         gross_heal = int(line_parts[29])

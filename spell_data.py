@@ -43,6 +43,8 @@ SPELL_NAMES = {
     "6075": "Renew (Rank 3)",
     "139": "Renew (Rank 1)",
 
+    "22009": "Greater Heal Renew",
+
     "19243": "Desperate Prayer (Rank 7)",
 
     "10901": "Power Word: Shield (Rank 10)",
@@ -217,6 +219,9 @@ SPELL_COEFFICIENTS = {
     "6075": 1.0 / 5,
     "139": 0.55 / 5,
 
+    # Greater Heal Renew, 8t2
+    "22009": 1.0 / 5,
+
     # Desperate Prayer
     "19243": 0.429,
 
@@ -274,6 +279,9 @@ SPELL_HEALS = {
     "6077": 315 / 5,
     "6075": 175 / 5,
     "139": 45 / 5,
+
+    # Greater Heal Renew, 8t2
+    "22009": 315 / 5,
 
     # Desperate Prayer
     "19243": 1459.5,
