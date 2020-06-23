@@ -8,6 +8,8 @@ import requests
 from json.decoder import JSONDecodeError
 from datetime import datetime
 
+from .event_types import HealEvent, DamageTakenEvent
+
 # First try environment key
 API_KEY = os.environ.get("WCL_API_KEY", None)
 if API_KEY is None:
@@ -128,36 +130,43 @@ def _get_heals(code, start=0, end=None, names=None, for_player=None):
                     # heal not from a player, skipping
                     continue
 
-                source = e["sourceID"]
-                source = names.get(source, f"[pid {source}]")
+                source_id = e["sourceID"]
+                source = names.get(source_id, f"[pid {source_id}]")
 
                 if for_player and source != for_player:
                     continue
 
-                target = e["targetID"]
-                target = names.get(target, f"[pid {source}]")
-                hitpoints = e.get("hitPoints", None)
+                target_id = e["targetID"]
+                target = names.get(target_id, f"[pid {target_id}]")
+                health_pct = e.get("hitPoints", None)
                 # event_type = e["type"]
 
                 amount = e["amount"]
 
                 if e["type"] == "absorbed":
                     # Shield absorb
-                    absorbs.append((timestamp, source, spell_id, target, hitpoints, amount, 0, False))
+                    event = HealEvent(
+                        timestamp, source, source_id, spell_id, target, target_id, health_pct, amount, 0, False
+                    )
+                    absorbs.append(event)
                     continue
 
                 overheal = e.get("overheal", 0)
 
                 if e.get("tick"):
                     # Periodic tick
-                    periodics.append(
-                        (timestamp, source, spell_id, target, hitpoints, amount + overheal, overheal, False)
+                    event = HealEvent(
+                        timestamp, source, source_id, spell_id, target, target_id, health_pct, amount + overheal, overheal, False
                     )
+                    periodics.append(event)
                     continue
 
                 is_crit = e.get("hitType", 1) == 2
 
-                heals.append((timestamp, source, spell_id, target, hitpoints, amount + overheal, overheal, is_crit))
+                event = HealEvent(
+                    timestamp, source, source_id, spell_id, target, target_id, health_pct, amount + overheal, overheal, is_crit
+                )
+                heals.append(event)
             except Exception as ex:
                 print("Exception while handling line", e)
                 print(ex)
@@ -207,15 +216,21 @@ def _get_damage(code, start=0, end=None, names=None, for_player=None):
                 #     # heal not from a player, skipping
                 #     continue
 
-                target = e["targetID"]
-                target = names.get(target, f"[pid {target}]")
+                target_id = e["targetID"]
+                target = names.get(target_id, f"[pid {target_id}]")
 
                 if for_player and target != for_player:
                     continue
 
-                source = e.get("sourceID", None)
+                source_id = e.get("sourceID", None)
+
+                if source_id is None:
+                    source = None
+                else:
+                    source = names.get(source_id, f"[pid {source_id}]")
+
                 # target = names.get(target, f"[pid {target}]")
-                hitpoints = e.get("hitPoints", None)
+                health_pct = e.get("hitPoints", None)
                 # event_type = e["type"]
 
                 amount = e["amount"]
@@ -228,7 +243,10 @@ def _get_damage(code, start=0, end=None, names=None, for_player=None):
                     # ignore attacks that do no damage
                     continue
 
-                damage.append((timestamp, source, 0, target, hitpoints, -(amount + mitigated), -mitigated, -overkill))
+                event = DamageTakenEvent(
+                    timestamp, source, source_id, 0, target, target_id, health_pct, -(amount + mitigated), -mitigated, -overkill
+                )
+                damage.append(event)
             except Exception as ex:
                 print("Exception while handling line", e)
                 print(ex)

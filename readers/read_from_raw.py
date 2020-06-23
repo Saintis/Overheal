@@ -8,6 +8,7 @@ import io
 from datetime import datetime
 
 from backend import get_player_name, get_time_stamp
+from .event_types import HealEvent, DamageTakenEvent
 
 STR_P_TIME = "%m/%d %H:%M:%S.%f"
 
@@ -88,6 +89,7 @@ class RawProcessor:
 
         timestamp = self.get_local_timestamp(line_parts[0])
 
+        source_id = line_parts[1]
         source = get_player_name(line_parts[2])
         target = get_player_name(line_parts[6])
 
@@ -100,13 +102,13 @@ class RawProcessor:
 
         is_crit = "1" in line_parts[32]
 
-        p_line = (timestamp, source, spell_id, target, target_id, health_pct, gross_heal, overheal, is_crit)
+        event = HealEvent(timestamp, source, source_id, spell_id, target, target_id, health_pct, gross_heal, overheal, is_crit)
 
-        self.all_events.append(p_line)
+        self.all_events.append(event)
         if periodic:
-            self.periodic_heals.append(p_line)
+            self.periodic_heals.append(event)
         else:
-            self.heals.append(p_line)
+            self.heals.append(event)
 
     def process_damage(self, line):
         line_parts = line.split(",")
@@ -119,6 +121,7 @@ class RawProcessor:
         timestamp = self.get_local_timestamp(line_parts[0])
         # source_id = line_parts[1]
 
+        source_id = line_parts[1]
         source = get_player_name(line_parts[2])
         target = get_player_name(line_parts[6])
 
@@ -134,12 +137,9 @@ class RawProcessor:
 
         mitigated = gross_damage - net_damage
 
-        data = (timestamp, source, spell_id, target, target_id, health_pct, -gross_damage, -mitigated, -overkill)
-        self.all_events.append(data)
-        self.damage.append(data)
-
-        # print(line[:-1])
-        # print(data)
+        event = DamageTakenEvent(timestamp, source, source_id, spell_id, target, target_id, health_pct, -gross_damage, -mitigated, -overkill)
+        self.all_events.append(event)
+        self.damage.append(event)
 
     def process_resurrection_or_death(self, line, the_list):
         line_parts = line.split(",")
