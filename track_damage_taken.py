@@ -19,7 +19,7 @@ def health_bar_chart(ax, times, deficits, health_start=0):
         d_health = deficit - deficit0
         color = "green" if d_health > 0 else "red"
 
-        ax.bar(t, -d_health, bottom=deficit, width=0.4, color=color)
+        ax.bar(t, -d_health, bottom=deficit, width=0.2, color=color)
         deficit0 = deficit
 
 
@@ -65,7 +65,25 @@ def plot_character_damage(
     ax1.axhline(mean_health, color="k")
     ax1.set_ylabel("Estimated health pool")
 
-    plt.savefig(f"{path}/{character_name}_damage.png")
+    plt.savefig(f"{path}/{character_name}_health_deficit.png")
+    plt.close()
+
+    net_damage = np.array(nets)
+    net_damage[net_damage > 0] = 0
+    damage_taken = np.cumsum(net_damage)
+
+    plt.step(times, abs(damage_taken), where="post", color="red")
+    plt.grid(axis="y")
+    plt.gca().set_axisbelow(True)
+
+    plt.title(f"Damage taken by {character_name} for {encounter}")
+    plt.xlabel("Time [s]")
+    plt.ylabel("Damage taken")
+    plt.ylim((0, None))
+    plt.xlim((0, None))
+
+    plt.savefig(f"{path}/{character_name}_damage_taken.png")
+    # plt.show()
     plt.close()
 
 
@@ -141,6 +159,7 @@ def plot_raid_damage(
         plt.savefig(f"{path}/raid_damage_no_{character_name}.png")
     else:
         plt.savefig(f"{path}/raid_damage.png")
+
     plt.close()
 
 
@@ -165,9 +184,15 @@ def main(argv=None):
 
     if args.raid or args.character_name is None:
         times, deficits, _, _, min_deficits = raid_damage_taken(events, verbose=args.verbose)
-        times_nc, deficits_nc, _, _, min_deficits = raid_damage_taken(
-            events, character_name=args.character_name, verbose=args.verbose
-        )
+
+        if args.character_name:
+            times_nc, deficits_nc, _, _, min_deficits = raid_damage_taken(
+                events, character_name=args.character_name, verbose=args.verbose
+            )
+        else:
+            times_nc = times
+            deficits_nc = deficits
+
         plot_raid_damage(
             times["all"],
             deficits["all"],
@@ -178,6 +203,7 @@ def main(argv=None):
             encounter=encounter,
             deaths=deaths,
             resurrections=resurrections,
+            path=args.path,
         )
     else:
         times, deficits, nets, health_pcts, health_ests = character_damage_taken(
@@ -192,6 +218,7 @@ def main(argv=None):
             encounter_time,
             encounter=encounter,
             character_name=args.character_name,
+            path=args.path,
         )
 
 

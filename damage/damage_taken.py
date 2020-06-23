@@ -7,9 +7,9 @@ By: Filip Gokstorp (Saintis-Dreadmist), 2020
 
 def _get_net_health_change(e, current_deficit):
     """Get the net health change, accounting for mitigation, overheal and overkill."""
-    gross = e[6]
-    over = e[7]
-    overkill = e[8]
+    gross = e[7]
+    over = e[8]
+    overkill = e[9]
     overheal = gross > 0 and over > 0
 
     if overkill < 0:
@@ -35,12 +35,8 @@ def character_damage_taken(events, character_name, verbose=False):
     deficit = 0
 
     for e in events:
-        target = e[3]
-        if target != character_name:
+        if e.target != character_name:
             continue
-
-        timestamp = e[0]
-        health_pct = e[5]
 
         net, overheal, _ = _get_net_health_change(e, deficit)
 
@@ -54,16 +50,16 @@ def character_damage_taken(events, character_name, verbose=False):
         if deficit > 0:
             deficit = 0
 
-        t = timestamp.total_seconds()
-
         # estimate total health from deficit and %health
         # health = max_health * %health = max_health - deficit
         # max_health * (1 - %health) = deficit
+        health_pct = e.health_pct
         if health_pct < 100:
             health_est = -deficit / (1.0 - health_pct / 100)
         else:
             health_est = None
 
+        t = e.timestamp.total_seconds()
         if verbose:
             print(t, deficit)
 
@@ -87,7 +83,6 @@ def raid_damage_taken(events, character_name=None, verbose=False):
     deficit = dict()
     all_deficit = 0
 
-    dead_characters = []
     death_times = dict()
     min_deficit = 0
     min_deficits = []
@@ -95,11 +90,10 @@ def raid_damage_taken(events, character_name=None, verbose=False):
     name_dict = dict()
 
     for e in events:
-        target = e[3]
-        target_id = e[4]
 
+        target_id = e.target_id
         if target_id not in name_dict:
-            name_dict[target_id] = target
+            name_dict[target_id] = e.target
 
         if target_id not in times:
             times[target_id] = []
@@ -109,13 +103,10 @@ def raid_damage_taken(events, character_name=None, verbose=False):
             health_ests[target_id] = []
             deficit[target_id] = 0
 
-        timestamp = e[0]
-        health_pct = e[5]
-
         current_deficit = deficit[target_id]
         net, overheal, overkill = _get_net_health_change(e, current_deficit)
 
-        source = e[1]
+        source = e.source
         if source == character_name:
             # if character name is specified, ignore all heals from that character
             net = min(0, net)
@@ -123,22 +114,20 @@ def raid_damage_taken(events, character_name=None, verbose=False):
         current_deficit += net
         all_deficit += net
 
-        if target_id in dead_characters and timestamp > death_times[target_id]:
-            print(f"Dead {target} participating again, assuming Ankh or Soulstone used.")
+        timestamp = e.timestamp
+        if target_id in death_times and timestamp > death_times[target_id]:
+            print(f"Dead {e.target} participating again, assuming Ankh or Soulstone used.")
 
-            dead_characters.remove(target_id)
             del death_times[target_id]
 
             # Recalculate min deficit
-            dead_deficits = list(deficits[character_id][-1] for character_id in dead_characters)
+            dead_deficits = list(deficits[character_id][-1] for character_id in death_times.keys())
             min_deficit = sum(dead_deficits)
 
         if overkill < 0:
             # someone died, lower raid min deficit
-            print(f"{target} died, {current_deficit} deficit, {-overkill} overkill")
-            dead_characters.append(target_id)
+            print(f"{e.target} died, {current_deficit} deficit, {-overkill} overkill")
             death_times[target_id] = timestamp
-            # print(dead_characters)
 
         # if (overheal and current_deficit < 0) or current_deficit > 0:
         #     print(f"{target} got overhealed with {current_deficit} deficit.")
@@ -154,6 +143,7 @@ def raid_damage_taken(events, character_name=None, verbose=False):
         # estimate total health from deficit and %health
         # health = max_health * %health = max_health - deficit
         # max_health * (1 - %health) = deficit
+        health_pct = e.health_pct
         if health_pct < 100:
             health_est = -current_deficit / (1.0 - health_pct / 100)
         else:
@@ -175,13 +165,13 @@ def raid_damage_taken(events, character_name=None, verbose=False):
             print(t, all_deficit)
 
         # update min deficit
-        if target_id in dead_characters:
-            dead_deficits = (deficits[character_id][-1] for character_id in dead_characters)
+        if target_id in death_times.keys():
+            dead_deficits = (deficits[character_id][-1] for character_id in death_times.keys())
             min_deficit = sum(dead_deficits)
 
         min_deficits.append(min_deficit)
 
-        deficit_time = {k: deficit[k] if k not in dead_characters else 0 for k in deficit}
+        deficit_time = {k: deficit[k] if k not in death_times else 0 for k in deficit}
         deficits_time.append(deficit_time)
 
     return times, deficits, deficits_time, name_dict, min_deficits
