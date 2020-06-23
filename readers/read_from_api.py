@@ -156,7 +156,16 @@ def _get_heals(code, start=0, end=None, names=None, for_player=None):
                 if e.get("tick"):
                     # Periodic tick
                     event = HealEvent(
-                        timestamp, source, source_id, spell_id, target, target_id, health_pct, amount + overheal, overheal, False
+                        timestamp,
+                        source,
+                        source_id,
+                        spell_id,
+                        target,
+                        target_id,
+                        health_pct,
+                        amount + overheal,
+                        overheal,
+                        False,
                     )
                     periodics.append(event)
                     continue
@@ -164,7 +173,16 @@ def _get_heals(code, start=0, end=None, names=None, for_player=None):
                 is_crit = e.get("hitType", 1) == 2
 
                 event = HealEvent(
-                    timestamp, source, source_id, spell_id, target, target_id, health_pct, amount + overheal, overheal, is_crit
+                    timestamp,
+                    source,
+                    source_id,
+                    spell_id,
+                    target,
+                    target_id,
+                    health_pct,
+                    amount + overheal,
+                    overheal,
+                    is_crit,
                 )
                 heals.append(event)
             except Exception as ex:
@@ -244,7 +262,16 @@ def _get_damage(code, start=0, end=None, names=None, for_player=None):
                     continue
 
                 event = DamageTakenEvent(
-                    timestamp, source, source_id, 0, target, target_id, health_pct, -(amount + mitigated), -mitigated, -overkill
+                    timestamp,
+                    source,
+                    source_id,
+                    0,
+                    target,
+                    target_id,
+                    health_pct,
+                    -(amount + mitigated),
+                    -mitigated,
+                    -overkill,
                 )
                 damage.append(event)
             except Exception as ex:

@@ -102,7 +102,9 @@ class RawProcessor:
 
         is_crit = "1" in line_parts[32]
 
-        event = HealEvent(timestamp, source, source_id, spell_id, target, target_id, health_pct, gross_heal, overheal, is_crit)
+        event = HealEvent(
+            timestamp, source, source_id, spell_id, target, target_id, health_pct, gross_heal, overheal, is_crit
+        )
 
         self.all_events.append(event)
         if periodic:
@@ -137,7 +139,9 @@ class RawProcessor:
 
         mitigated = gross_damage - net_damage
 
-        event = DamageTakenEvent(timestamp, source, source_id, spell_id, target, target_id, health_pct, -gross_damage, -mitigated, -overkill)
+        event = DamageTakenEvent(
+            timestamp, source, source_id, spell_id, target, target_id, health_pct, -gross_damage, -mitigated, -overkill
+        )
         self.all_events.append(event)
         self.damage.append(event)
 

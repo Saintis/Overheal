@@ -25,7 +25,9 @@ def test_track_raid_damage(script_runner, tmpdir):
 
 def test_track_raid_damage_no_character(script_runner, tmpdir):
     path = tmpdir.strpath
-    ret = script_runner.run(python, "track_damage_taken.py", log_file, character, "-e", "1", "-v", "--path", path, "--raid")
+    ret = script_runner.run(
+        python, "track_damage_taken.py", log_file, character, "-e", "1", "-v", "--path", path, "--raid"
+    )
 
     assert ret.success
     assert ret.stderr == ""

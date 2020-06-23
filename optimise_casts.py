@@ -83,7 +83,20 @@ def pick_spell(deficit, mana, h, spell_id=None, talents=None):
     return heal, spell_mana, cast_time
 
 
-def optimise_casts(character_name, times, deficits_time, name_dict, character_data, encounter_time, talents=None, spell_id=None, verbose=False, show=True, path=None, plot=True):
+def optimise_casts(
+    character_name,
+    times,
+    deficits_time,
+    name_dict,
+    character_data,
+    encounter_time,
+    talents=None,
+    spell_id=None,
+    verbose=False,
+    show=True,
+    path=None,
+    plot=True,
+):
     """Evaluate a casting strategy."""
     if show is True:
         plot = True
@@ -159,7 +172,9 @@ def optimise_casts(character_name, times, deficits_time, name_dict, character_da
                 last_finish_time = finish_time
 
                 if verbose:
-                    print(f"  {next_time:4.1f} heal {name_dict[target_id]} ({deficit: 5.0f}) for {net:4.0f}; {total_healing:5.0f}")
+                    print(
+                        f"  {next_time:4.1f} heal {name_dict[target_id]} ({deficit: 5.0f}) for {net:4.0f}; {total_healing:5.0f}"
+                    )
 
             # min wait time is 0.2s
             finish_time = time + time_step
@@ -170,7 +185,9 @@ def optimise_casts(character_name, times, deficits_time, name_dict, character_da
             # only heal if there is someone with a deficit
             if deficit < 0:
                 # pick spell by deficit
-                heal, mana, cast_time = pick_spell(deficit, available_mana, character_data.h, talents=talents, spell_id=spell_id)
+                heal, mana, cast_time = pick_spell(
+                    deficit, available_mana, character_data.h, talents=talents, spell_id=spell_id
+                )
 
                 if heal > 0:
                     if verbose:
@@ -271,9 +288,7 @@ def main(argv=None):
     character_data_nc = CharacterData(800.0, 0.0, 40.0, 200.0, 8000.0)
     character_data_ac = CharacterData(800.0, 1.0, 40.0, 200.0, 8000.0)
 
-    times, _, deficits, name_dict, _ = raid_damage_taken(
-        events, character_name=args.character_name
-    )
+    times, _, deficits, name_dict, _ = raid_damage_taken(events, character_name=args.character_name)
 
     encounter_time = (encounter_end - encounter_start).total_seconds()
     # optimise_casts(args.character_name, times["all"], deficits, name_dict, character_data, encounter_time, spell_id=args.spell_id, verbose=args.verbose)
@@ -304,8 +319,32 @@ def main(argv=None):
     path = "figs/optimise"
     for sid in sids:
 
-        th_nc = optimise_casts(args.character_name, times["all"], deficits, name_dict, character_data_nc, encounter_time, spell_id=sid, verbose=False, show=False, plot=False, path=path)
-        th_ac = optimise_casts(args.character_name, times["all"], deficits, name_dict, character_data_ac, encounter_time, spell_id=sid, verbose=False, show=False, plot=False, path=path)
+        th_nc = optimise_casts(
+            args.character_name,
+            times["all"],
+            deficits,
+            name_dict,
+            character_data_nc,
+            encounter_time,
+            spell_id=sid,
+            verbose=False,
+            show=False,
+            plot=False,
+            path=path,
+        )
+        th_ac = optimise_casts(
+            args.character_name,
+            times["all"],
+            deficits,
+            name_dict,
+            character_data_ac,
+            encounter_time,
+            spell_id=sid,
+            verbose=False,
+            show=False,
+            plot=False,
+            path=path,
+        )
 
         lows.append(th_nc)
         highs.append(th_ac)
