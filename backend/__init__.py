@@ -3,13 +3,25 @@ Collection of general functions for managing logs data.
 
 By: Filip Gokstorp (Saintis), 2020
 """
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 ENCOUNTER_START = "ENCOUNTER_START"
 ENCOUNTER_END = "ENCOUNTER_END"
 
 STR_P_TIME = "%m/%d %H:%M:%S.%f"
+
+
+def shorten_spell_name(spell_name):
+    spell_name_parts = spell_name.split()
+    if "[" in spell_name:
+        spell_tag = spell_name_parts[1][:-1]
+    elif "(" in spell_name:
+        spell_tag = "".join([k[0] for k in spell_name_parts[:-2]]) + spell_name_parts[-1][:-1]
+    else:
+        spell_tag = "".join([k[0] for k in spell_name_parts])
+
+    return spell_tag
 
 
 def group_processed_lines(processed_lines, ignore_crit, spell_id=None):
@@ -25,17 +37,19 @@ def group_processed_lines(processed_lines, ignore_crit, spell_id=None):
 
     filter_spell_id = spell_id
 
-    for (time_stamp, source, spell_id, target, health_pct, total_heal, overheal, is_crit) in processed_lines:
-        if ignore_crit and is_crit:
+    for event in processed_lines:
+        spell_id = event.spell_id
+        if filter_spell_id and spell_id != filter_spell_id:
             continue
 
-        if filter_spell_id and spell_id != filter_spell_id:
+        is_crit = event.is_crit
+        if ignore_crit and is_crit:
             continue
 
         if spell_id not in spell_dict:
             spell_dict[spell_id] = []
 
-        spell_dict[spell_id].append((total_heal, overheal, is_crit))
+        spell_dict[spell_id].append((event.total_heal, event.overheal, is_crit))
 
     return spell_dict
 
@@ -91,6 +105,7 @@ def select_encounter(encounters):
 
 def lines_for_encounter(log, encounter):
     """Get the lines for the specified encounter."""
+    # TODO: move this to raw reader and make similar functions for API
 
     if encounter is None:
         # use all lines

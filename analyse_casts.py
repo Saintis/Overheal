@@ -10,7 +10,7 @@ import json
 
 from readers import read_from_raw as raw
 from backend.parser import OverhealParser
-from backend import get_player_name, get_time_stamp, encounter_picker
+from backend import get_player_name, get_time_stamp, encounter_picker, shorten_spell_name
 import spell_data as sd
 
 
@@ -210,14 +210,10 @@ def plot_casts(casts_dict, encounter=None, start=None, end=None, mark=None, anon
             else:
                 c = cast_list[i]
                 spell_name = sd.spell_name(c[3], warn_on_not_found=False)
-                spell_name_parts = spell_name.split()
+                spell_tag = shorten_spell_name(spell_name)
+
                 if "[" in spell_name:
-                    spell_tag = spell_name_parts[1][:-1]
                     color = "#b3b3b3" if even else "#cccccc"
-                elif "(" in spell_name:
-                    spell_tag = "".join([k[0] for k in spell_name_parts[:-2]]) + spell_name_parts[-1][:-1]
-                else:
-                    spell_tag = "".join([k[0] for k in spell_name_parts])
 
                 if start is None:
                     start = c[1]
@@ -348,7 +344,7 @@ def analyse_activity(casts_dict, encounter, encounter_start, encounter_end):
         )
 
 
-def analyse_casts(source, encounter=None, **kwargs):
+def analyse_casts(source, encounter=None, all=False, **kwargs):
     log = raw.get_lines(source)
     encounter, encounter_lines, encounter_start, encounter_end = encounter_picker(log, encounter)
 
@@ -358,7 +354,7 @@ def analyse_casts(source, encounter=None, **kwargs):
 
     for c in casts:
         s = c[0]
-        if s not in HEALERS:
+        if not all and s not in HEALERS:
             continue
 
         if s not in casts_dict:
@@ -384,10 +380,11 @@ def main(argv=None):
         help="Time-stamp to mark with a line, good for tracking important events, such as the death of a tank.",
     )
     parser.add_argument("--anonymize", action="store_true", help="Anonymizes names for distribution.")
+    parser.add_argument("--all", action="store_true", help="Show all players")
 
     args = parser.parse_args(argv)
 
-    analyse_casts(args.source, encounter=args.encounter, mark=args.mark, anonymize=args.anonymize)
+    analyse_casts(args.source, encounter=args.encounter, mark=args.mark, anonymize=args.anonymize, all=args.all)
 
 
 if __name__ == "__main__":
