@@ -82,6 +82,14 @@ def get_casts(log_lines):
             spell_time = get_time_stamp(line_parts[0])
             spell_id = line_parts[9]
 
+            if source in casting_dict:
+                # already casting a spell
+                cast = casting_dict.pop(source)
+                (start_time, sid, _) = cast
+
+                cast = (source, start_time, spell_time, sid, f"[Cancelled]")
+                cast_list.append(cast)
+
             casting_dict[source] = (spell_time, spell_id, line)
 
         elif "SPELL_CAST_SUCCESS" in line_parts[0]:
@@ -172,7 +180,7 @@ def get_casts(log_lines):
     return cast_list, full_heal_data
 
 
-def plot_casts(casts_dict, encounter=None, start=None, end=None, mark=None, anonymize=True, deaths=None):
+def plot_casts(casts_dict, encounter, start=None, end=None, mark=None, anonymize=True, deaths=None):
     casts = list(casts_dict.values())
     labels = list(casts_dict.keys())
     most_casts = max((len(c) for c in casts))
@@ -225,10 +233,13 @@ def plot_casts(casts_dict, encounter=None, start=None, end=None, mark=None, anon
                 #     color = "#ff9999" if even else "#ffb3b3"
                 elif target == "[Interrupted]":
                     color = "#ff99ff" if even else "#ffccff"
-                    target = ""
+                    target = "[I]"
+                elif target == "[Cancelled]":
+                    color = "#ff99ff" if even else "#ffccff"
+                    target = "[C]"
                 elif target == "[Your target is dead]":
                     color = "#800000" if even else "#b30000"
-                    target = ""
+                    target = "[D]"
                 elif target == "nil":
                     target = ""
 
@@ -286,8 +297,10 @@ def plot_casts(casts_dict, encounter=None, start=None, end=None, mark=None, anon
         plt.text(x, y, player, ha="right", va="top")
         last_ts = timestamp
 
-    fig_path = "figs/casts.png"
+    e_name = encounter.split()[0]
+    fig_path = f"figs/casts_{e_name}.png"
     plt.savefig(fig_path)
+    plt.close()
     print(f"Saved casts figure to `{fig_path}`")
 
 

@@ -84,7 +84,10 @@ SPELL_NAMES = {
 
     # Druid
     "9889": "Healing Touch (Rank 10)",
+    "8903": "Healing Touch (Rank 7)",
+
     "9841": "Rejuvenation (Rank 10)",
+
     "9858": "Regrowth (Rank 9)",
 
     "17116": "Nature's Swiftness",
