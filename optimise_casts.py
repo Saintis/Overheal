@@ -83,7 +83,7 @@ def pick_spell(deficit, mana, h, spell_id=None, talents=None):
     return heal, spell_mana, cast_time
 
 
-def optimise_casts(
+def evaluate_casting_strategy(
     character_name,
     times,
     deficits_time,
@@ -106,7 +106,7 @@ def optimise_casts(
     os.makedirs(path, exist_ok=True)
 
     print()
-    print(f"  Optimised casts for {character_name}")
+    print(f"  Evaluating casting strategy, ignoring heals from {character_name}")
     print()
 
     print(f"  mana:      {character_data.mana}")
@@ -127,7 +127,8 @@ def optimise_casts(
     # dictionary of applied heals for characters
     applied_heals = dict()
 
-    total_healing = 0.0
+    sum_net_healing = 0.0
+    sum_gross_healing = 0.0
     regen_mana = 0.0
     casts = 0
 
@@ -166,14 +167,15 @@ def optimise_casts(
 
                 # count cast and add healing and deduct mana
                 casts += 1
-                total_healing += net
+                sum_net_healing += net
+                sum_gross_healing += heal
                 available_mana -= mana
 
                 last_finish_time = finish_time
 
                 if verbose:
                     print(
-                        f"  {next_time:4.1f} heal {name_dict[target_id]} ({deficit: 5.0f}) for {net:4.0f}; {total_healing:5.0f}"
+                        f"  {next_time:4.1f} heal {name_dict[target_id]} ({deficit: 5.0f}) for {net:4.0f}; {sum_net_healing:5.0f}"
                     )
 
             # min wait time is 0.2s
@@ -197,7 +199,7 @@ def optimise_casts(
 
         ticks.append(time)
         manas.append(available_mana)
-        heals.append(total_healing)
+        heals.append(sum_net_healing)
 
         # get next time
         next_time = min(time + time_step, finish_time, next_deficit_time, encounter_time)
@@ -227,14 +229,14 @@ def optimise_casts(
                 next_deficit_time = encounter_time + time_step
 
     ticks.append(encounter_time)
-    heals.append(total_healing)
+    heals.append(sum_net_healing)
     manas.append(available_mana)
 
     print()
-    print(f"  Total healing: {total_healing:.0f}")
+    print(f"  Total healing: {sum_net_healing:.0f}")
     print(f"  Casts:         {casts}")
     print(f"  CPM:           {casts / encounter_time * 60:.1f}")
-    print(f"  Total hps:     {total_healing / encounter_time:.1f}")
+    print(f"  Total hps:     {sum_net_healing / encounter_time:.1f}")
     print(f"  Regen mana:    {regen_mana:.0f}  ({regen_mana / encounter_time * 5:.1f} mp5)")
     print(f"  End mana:      {available_mana:.0f}")
 
@@ -254,7 +256,7 @@ def optimise_casts(
 
         ax.set_xlabel("Encounter time [s]")
 
-        title = f"{total_healing / 1000:.1f}k healing"
+        title = f"{sum_net_healing / 1000:.1f}k healing"
 
         if spell_id:
             title = sd.spell_name(spell_id) + ", " + title
@@ -268,7 +270,7 @@ def optimise_casts(
 
         plt.close(fig)
 
-    return total_healing
+    return sum_net_healing, sum_gross_healing
 
 
 def main(argv=None):
@@ -319,7 +321,7 @@ def main(argv=None):
     path = "figs/optimise"
     for sid in sids:
 
-        th_nc = optimise_casts(
+        nh_nc, gh_nc = evaluate_casting_strategy(
             args.character_name,
             times["all"],
             deficits,
@@ -332,29 +334,29 @@ def main(argv=None):
             plot=False,
             path=path,
         )
-        th_ac = optimise_casts(
-            args.character_name,
-            times["all"],
-            deficits,
-            name_dict,
-            character_data_ac,
-            encounter_time,
-            spell_id=sid,
-            verbose=False,
-            show=False,
-            plot=False,
-            path=path,
-        )
+        # nh_ac, gh_ac = evaluate_casting_strategy(
+        #     args.character_name,
+        #     times["all"],
+        #     deficits,
+        #     name_dict,
+        #     character_data_ac,
+        #     encounter_time,
+        #     spell_id=sid,
+        #     verbose=False,
+        #     show=False,
+        #     plot=False,
+        #     path=path,
+        # )
 
-        lows.append(th_nc)
-        highs.append(th_ac)
+        lows.append(nh_nc)
+        highs.append(gh_nc)
 
     sids = list(map(lambda s: shorten_spell_name(sd.spell_name(s)), sids))
 
     fig, ax = plt.subplots(figsize=(12, 8), constrained_layout=True)
 
-    ax.bar(sids, lows, color="#33cc33", label="No crit")
-    ax.bar(sids, np.subtract(highs, lows), bottom=lows, color="#85e085", label="All crit")
+    ax.bar(sids, lows, color="#33cc33", label="Net heal")
+    ax.bar(sids, np.subtract(highs, lows), bottom=lows, color="#85e085", label="Overheal")
     ax.grid(axis="y")
     ax.set_axisbelow(True)
     ax.legend()
