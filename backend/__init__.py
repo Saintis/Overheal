@@ -3,6 +3,7 @@ Collection of general functions for managing logs data.
 
 By: Filip Gokstorp (Saintis), 2020
 """
+import hashlib
 from datetime import datetime
 
 
@@ -10,6 +11,14 @@ ENCOUNTER_START = "ENCOUNTER_START"
 ENCOUNTER_END = "ENCOUNTER_END"
 
 STR_P_TIME = "%m/%d %H:%M:%S.%f"
+
+
+def anonymize_name(name):
+    """Anonymize a player name"""
+    name_bytes = bytes(name, "utf8")
+    hash_obj = hashlib.sha1(name_bytes)
+
+    return hash_obj.hexdigest()[:4]
 
 
 def shorten_spell_name(spell_name):

@@ -136,6 +136,14 @@ class RawProcessor:
         gross_damage = int(line_parts[-9])
         overkill = int(line_parts[-8])
 
+        # school = line_parts[-7]
+        # resisted = int(line_parts[-6])
+        # blocked = int(line_parts[-5])
+        # absorbed = int(line_parts[-4])
+        # critical = line_parts[-3] == "1"
+        # glancing = line_parts[-2] == "1"
+        # crushing = line_parts[-1] == "1\n"
+
         mitigated = gross_damage - net_damage
 
         event = DamageTakenEvent(

@@ -41,7 +41,6 @@ class OverhealParser(argparse.ArgumentParser):
                 "--spell_power",
                 type=int,
                 help="Character spell power. If None, only look at spell power change relative to current amount",
-                default=0,
             )
 
         if accept_encounter:

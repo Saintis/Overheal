@@ -89,6 +89,7 @@ SPELL_NAMES = {
     "9841": "Rejuvenation (Rank 10)",
 
     "9858": "Regrowth (Rank 9)",
+    "9857": "Regrowth (Rank 8)",
 
     "17116": "Nature's Swiftness",
     "18562": "Swiftmend",

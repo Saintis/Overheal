@@ -5,12 +5,11 @@ By: Filip Gokstorp (Saintis-Dreadmist), 2020
 """
 from datetime import timedelta
 import matplotlib.pyplot as plt
-import hashlib
 import json
 
 from readers import read_from_raw as raw
 from backend.parser import OverhealParser
-from backend import get_player_name, get_time_stamp, encounter_picker, shorten_spell_name
+from backend import get_player_name, get_time_stamp, encounter_picker, shorten_spell_name, anonymize_name
 import spell_data as sd
 
 
@@ -25,17 +24,8 @@ except FileNotFoundError:
     exit(400)
 
 
-CANCEL_LABEL = "[c]"
 HEALERS = RAID["healers"]
 TANKS = RAID["tanks"]
-
-
-def anonymize_name(name):
-    """Anonymize a player name"""
-    name_bytes = bytes(name, "utf8")
-    hash_obj = hashlib.sha1(name_bytes)
-
-    return hash_obj.hexdigest()[:4]
 
 
 def get_deaths(log_lines):
@@ -74,6 +64,20 @@ def get_casts(log_lines):
         line_parts = line.split(",")
 
         if "Player" not in line_parts[1]:
+            # check for UNIT DIED
+            if "UNIT_DIED" in line_parts[0]:
+                cancel_time = get_time_stamp(line_parts[0])
+                target = get_player_name(line_parts[6])
+
+                if target not in casting_dict:
+                    continue
+
+                cast = casting_dict.pop(target)
+                (start_time, spell_id, _) = cast
+
+                cast = (target, start_time, cancel_time, spell_id, f"[Source died]")
+                cast_list.append(cast)
+
             continue
 
         if "SPELL_CAST_START" in line_parts[0]:
@@ -239,7 +243,10 @@ def plot_casts(casts_dict, encounter, start=None, end=None, mark=None, anonymize
                     target = "[C]"
                 elif target == "[Your target is dead]":
                     color = "#800000" if even else "#b30000"
-                    target = "[D]"
+                    target = "[TD]"
+                elif target == "[Source died]":
+                    color = "#800000" if even else "#b30000"
+                    target = "[SD]"
                 elif target == "nil":
                     target = ""
 
