@@ -9,6 +9,10 @@ from json.decoder import JSONDecodeError
 from datetime import datetime
 
 from .event_types import HealEvent, DamageTakenEvent
+from .processor import AbstractProcessor
+
+from backend import ProgressBar
+
 
 # First try environment key
 API_KEY = os.environ.get("WCL_API_KEY", None)
@@ -24,36 +28,16 @@ if API_KEY is None:
 API_ROOT = "https://classic.warcraftlogs.com:443/v1"
 
 
-class ProgressBar:
-    """Simple CLI progress bar"""
-
-    def __init__(self, end, length=70):
-        self.end = end
-        self.length = length
-
-    def render(self, progress):
-        """Render the progress bar"""
-        assert progress >= 0, "Progress must be positive"
-
-        pct = progress / self.end
-        n_bars = int(pct * self.length)
-        bars = "=" * n_bars
-        if n_bars < self.length:
-            bars += ">"
-
-        return f"[{bars:70s}]  {pct:4.0%}  {progress:8d} / {self.end:8d}"
-
-
-def _get_api_request(url):
+def _get_api_request(url, **params):
     """
     Get an API request and check status code.
 
     :param url: full url with request details to use.
     """
-    req = requests.get(url)
+    req = requests.get(url, params=dict(api_key=API_KEY, **params))
 
     if not req.status_code == 200:
-        print("Error getting API request:", url)
+        print("Error getting API request:", req.url)
         print("Status code:", req.status_code)
         print("Error:", req.text)
         exit(200)
@@ -69,92 +53,130 @@ def _get_api_request(url):
     return data
 
 
-def get_fights(code):
-    url = f"{API_ROOT}/report/fights/{code}?api_key={API_KEY}"
-    return _get_api_request(url)
+class APIProcessor(AbstractProcessor):
+    """Processes WCL API for data."""
 
+    def __init__(self, source, character_name=None):
+        super().__init__(source, character_name)
 
-def get_player_names(code):
-    fight_data = get_fights(code)
+        self.code = source
+        self._player_names = None
 
-    friendlies = fight_data["friendlies"]
-    player_names = dict()
+    @property
+    def player_names(self):
+        if self._player_names is None:
+            self.get_player_names()
 
-    for f in friendlies:
-        player_id = f["id"]
-        player_name = f["name"]
-        player_names[player_id] = player_name
+        return self._player_names
 
-    return player_names
+    def get_fights(self):
+        url = f"{API_ROOT}/report/fights/{self.code}"
+        return _get_api_request(url)
 
+    def get_player_names(self):
+        fight_data = self.get_fights()
 
-def _get_heals(code, start=0, end=None, names=None, for_player=None):
-    """Gets all heals for the log"""
+        friendlies = fight_data["friendlies"]
+        player_names = dict()
 
-    if end is None:
-        end = start + 3 * 60 * 60 * 1000  # look at up to 3h of data
+        for f in friendlies:
+            player_id = f["id"]
+            player_name = f["name"]
+            player_names[player_id] = player_name
 
-    if names is None:
-        names = dict()
+        self._player_names = player_names
 
-    heals = []
-    periodics = []
-    absorbs = []
+    def get_heals(self, start=None, end=None):
+        """Gets all heals for the log"""
+        code = self.source
+        for_player = self.character_name
+        names = self.player_names
 
-    next_start = start
+        if start is None:
+            start = 0
 
-    print("Fetching healing events from WCL...")
-    progress_bar = ProgressBar(end - start, length=70)
+        if end is None:
+            fight_data = self.get_fights()
+            end = fight_data["end"] - fight_data["start"]
 
-    # will have to loop to get results
-    request_more = True
-    while request_more:
-        url = f"{API_ROOT}/report/events/healing/{code}?start={next_start}&end={end}&api_key={API_KEY}"
+        if names is None:
+            names = dict()
 
-        print(progress_bar.render(next_start - start), end="\r")
+        heals = []
+        periodics = []
+        absorbs = []
 
-        data = _get_api_request(url)
-        events = data["events"]
-        if "nextPageTimestamp" in data:
-            next_start = data["nextPageTimestamp"]
-        else:
-            request_more = False
+        next_start = start
 
-        for e in events:
-            try:
-                timestamp = e["timestamp"]
-                timestamp = datetime.fromtimestamp(timestamp / 1000.0).time()
-                spell_id = str(e["ability"]["guid"])
+        print("Fetching healing events from WCL...")
+        progress_bar = ProgressBar(end - start, length=70)
 
-                if "sourceID" not in e:
-                    # heal not from a player, skipping
-                    continue
+        # will have to loop to get results
+        request_more = True
+        while request_more:
+            url = f"{API_ROOT}/report/events/healing/{code}"
 
-                source_id = e["sourceID"]
-                source = names.get(source_id, f"[pid {source_id}]")
+            print(progress_bar.render(next_start - start), end="\r")
 
-                if for_player and source != for_player:
-                    continue
+            data = _get_api_request(url, start=next_start, end=end)
+            events = data["events"]
+            if "nextPageTimestamp" in data:
+                next_start = data["nextPageTimestamp"]
+            else:
+                request_more = False
 
-                target_id = e["targetID"]
-                target = names.get(target_id, f"[pid {target_id}]")
-                health_pct = e.get("hitPoints", None)
-                # event_type = e["type"]
+            for e in events:
+                try:
+                    timestamp = e["timestamp"]
+                    timestamp = datetime.fromtimestamp(timestamp / 1000.0).time()
+                    spell_id = str(e["ability"]["guid"])
 
-                amount = e["amount"]
+                    if "sourceID" not in e:
+                        # heal not from a player, skipping
+                        continue
 
-                if e["type"] == "absorbed":
-                    # Shield absorb
-                    event = HealEvent(
-                        timestamp, source, source_id, spell_id, target, target_id, health_pct, amount, 0, False
-                    )
-                    absorbs.append(event)
-                    continue
+                    source_id = e["sourceID"]
+                    source = names.get(source_id, f"[pid {source_id}]")
 
-                overheal = e.get("overheal", 0)
+                    if for_player and source != for_player:
+                        continue
 
-                if e.get("tick"):
-                    # Periodic tick
+                    target_id = e["targetID"]
+                    target = names.get(target_id, f"[pid {target_id}]")
+                    health_pct = e.get("hitPoints", None)
+                    # event_type = e["type"]
+
+                    amount = e["amount"]
+
+                    if e["type"] == "absorbed":
+                        # Shield absorb
+                        event = HealEvent(
+                            timestamp, source, source_id, spell_id, target, target_id, health_pct, amount, 0, False
+                        )
+                        absorbs.append(event)
+                        continue
+
+                    overheal = e.get("overheal", 0)
+
+                    if e.get("tick"):
+                        # Periodic tick
+                        event = HealEvent(
+                            timestamp,
+                            source,
+                            source_id,
+                            spell_id,
+                            target,
+                            target_id,
+                            health_pct,
+                            amount + overheal,
+                            overheal,
+                            False,
+                        )
+                        periodics.append(event)
+                        continue
+
+                    is_crit = e.get("hitType", 1) == 2
+
                     event = HealEvent(
                         timestamp,
                         source,
@@ -165,122 +187,109 @@ def _get_heals(code, start=0, end=None, names=None, for_player=None):
                         health_pct,
                         amount + overheal,
                         overheal,
-                        False,
+                        is_crit,
                     )
-                    periodics.append(event)
-                    continue
+                    heals.append(event)
+                except Exception as ex:
+                    print("Exception while handling line", e)
+                    print(ex)
 
-                is_crit = e.get("hitType", 1) == 2
+        print(progress_bar.render(end - start))
 
-                event = HealEvent(
-                    timestamp,
-                    source,
-                    source_id,
-                    spell_id,
-                    target,
-                    target_id,
-                    health_pct,
-                    amount + overheal,
-                    overheal,
-                    is_crit,
-                )
-                heals.append(event)
-            except Exception as ex:
-                print("Exception while handling line", e)
-                print(ex)
+        return heals, periodics, absorbs
 
-    print(progress_bar.render(end - start))
+    def get_damage(self, start=None, end=None):
+        """Gets all heals and damage events for the log"""
 
-    return heals, periodics, absorbs
+        if start is None:
+            start = 0
 
+        if end is None:
+            end = start + 3 * 60 * 60 * 1000  # look at up to 3h of data
 
-def _get_damage(code, start=0, end=None, names=None, for_player=None):
-    """Gets all heals and damage events for the log"""
+        names = self.player_names
 
-    if end is None:
-        end = start + 3 * 60 * 60 * 1000  # look at up to 3h of data
+        damage = []
 
-    if names is None:
-        names = dict()
+        next_start = start
 
-    damage = []
+        print("Fetching damage-taken events from WCL...")
+        progress_bar = ProgressBar(end - start, length=70)
 
-    next_start = start
+        # will have to loop to get results
+        request_more = True
+        while request_more:
+            url = f"{API_ROOT}/report/events/damage-taken/{self.code}"
 
-    print("Fetching damage-taken events from WCL...")
-    progress_bar = ProgressBar(end - start, length=70)
+            print(progress_bar.render(next_start - start), end="\r")
 
-    # will have to loop to get results
-    request_more = True
-    while request_more:
-        url = f"{API_ROOT}/report/events/damage-taken/{code}?start={next_start}&end={end}&api_key={API_KEY}"
+            data = _get_api_request(url, start=next_start, end=end)
+            events = data["events"]
+            if "nextPageTimestamp" in data:
+                next_start = data["nextPageTimestamp"]
+            else:
+                request_more = False
 
-        print(progress_bar.render(next_start - start), end="\r")
+            for e in events:
+                try:
+                    timestamp = e["timestamp"]
+                    timestamp = datetime.fromtimestamp(timestamp / 1000.0).time()
+                    # spell_id = str(e["ability"]["guid"])
 
-        data = _get_api_request(url)
-        events = data["events"]
-        if "nextPageTimestamp" in data:
-            next_start = data["nextPageTimestamp"]
-        else:
-            request_more = False
+                    # if "sourceID" not in e:
+                    #     # heal not from a player, skipping
+                    #     continue
 
-        for e in events:
-            try:
-                timestamp = e["timestamp"]
-                timestamp = datetime.fromtimestamp(timestamp / 1000.0).time()
-                # spell_id = str(e["ability"]["guid"])
+                    target_id = e["targetID"]
+                    target = names.get(target_id, f"[pid {target_id}]")
 
-                # if "sourceID" not in e:
-                #     # heal not from a player, skipping
-                #     continue
+                    if self.character_name and target != self.character_name:
+                        continue
 
-                target_id = e["targetID"]
-                target = names.get(target_id, f"[pid {target_id}]")
+                    source_id = e.get("sourceID", None)
 
-                if for_player and target != for_player:
-                    continue
+                    if source_id is None:
+                        source = None
+                    else:
+                        source = names.get(source_id, f"[pid {source_id}]")
 
-                source_id = e.get("sourceID", None)
+                    # target = names.get(target, f"[pid {target}]")
+                    health_pct = e.get("hitPoints", None)
+                    # event_type = e["type"]
 
-                if source_id is None:
-                    source = None
-                else:
-                    source = names.get(source_id, f"[pid {source_id}]")
+                    amount = e["amount"]
+                    mitigated = e.get("mitigated", 0)
+                    overkill = e.get("overkill", -1)
 
-                # target = names.get(target, f"[pid {target}]")
-                health_pct = e.get("hitPoints", None)
-                # event_type = e["type"]
+                    # is_crit = e.get("hitType", 1) == 2
 
-                amount = e["amount"]
-                mitigated = e.get("mitigated", 0)
-                overkill = e.get("overkill", -1)
+                    if amount == 0:
+                        # ignore attacks that do no damage
+                        continue
 
-                # is_crit = e.get("hitType", 1) == 2
+                    event = DamageTakenEvent(
+                        timestamp,
+                        source,
+                        source_id,
+                        0,
+                        target,
+                        target_id,
+                        health_pct,
+                        -(amount + mitigated),
+                        -mitigated,
+                        -overkill,
+                    )
+                    damage.append(event)
+                except Exception as ex:
+                    print("Exception while handling line", e)
+                    print(ex)
 
-                if amount == 0:
-                    # ignore attacks that do no damage
-                    continue
+        print(progress_bar.render(end - start))
 
-                event = DamageTakenEvent(
-                    timestamp,
-                    source,
-                    source_id,
-                    0,
-                    target,
-                    target_id,
-                    health_pct,
-                    -(amount + mitigated),
-                    -mitigated,
-                    -overkill,
-                )
-                damage.append(event)
-            except Exception as ex:
-                print("Exception while handling line", e)
-                print(ex)
+        return damage
 
-    print(progress_bar.render(end - start))
-
-    return damage
+    def process(self):
+        pass
 
 
 def get_heals(code, start=None, end=None, character_name=None, **_):
@@ -294,16 +303,9 @@ def get_heals(code, start=None, end=None, character_name=None, **_):
 
     :returns (heals, periodic_heals, absorbs), lists of heal events
     """
-    names = get_player_names(code)
+    processor = APIProcessor(code, character_name=character_name)
 
-    if start is None:
-        start = 0
-
-    if end is None:
-        fight_data = get_fights(code)
-        end = fight_data["end"] - fight_data["start"]
-
-    return _get_heals(code, start, end, names, for_player=character_name)
+    return processor.get_heals(start=start, end=end)
 
 
 def get_damage(code, start=None, end=None, character_name=None, **_):
@@ -317,16 +319,9 @@ def get_damage(code, start=None, end=None, character_name=None, **_):
 
     :returns (heals, periodic_heals, absorbs), lists of heal events
     """
-    names = get_player_names(code)
+    processor = APIProcessor(code, character_name=character_name)
 
-    if start is None:
-        start = 0
-
-    if end is None:
-        fight_data = get_fights(code)
-        end = fight_data["end"] - fight_data["start"]
-
-    return _get_damage(code, start, end, names, for_player=character_name)
+    return processor.get_damage(start=start, end=end)
 
 
 def get_heals_and_damage(code, start=None, end=None, character_name=None, **_):
@@ -340,17 +335,10 @@ def get_heals_and_damage(code, start=None, end=None, character_name=None, **_):
 
     :returns (heals, periodic_heals, absorbs), lists of heal events
     """
-    names = get_player_names(code)
+    processor = APIProcessor(code, character_name=character_name)
 
-    if start is None:
-        start = 0
-
-    if end is None:
-        fight_data = get_fights(code)
-        end = fight_data["end"] - fight_data["start"]
-
-    damage = _get_damage(code, start, end, names, for_player=character_name)
-    heals, periodics, _ = _get_heals(code, start, end, names, for_player=character_name)
+    damage = processor.get_damage(start, end)
+    heals, periodics, _ = processor.get_heals(start, end)
 
     # join damage, heals, periodics and sort by timestamp
     return sorted(damage + heals + periodics, key=lambda e: e[0])
