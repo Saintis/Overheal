@@ -167,3 +167,23 @@ def encounter_picker(log, encounter_i=None):
 
     encounter_lines, encounter_start, encounter_end = lines_for_encounter(log, encounter)
     return encounter, encounter_lines, encounter_start, encounter_end
+
+
+class ProgressBar:
+    """Simple CLI progress bar"""
+
+    def __init__(self, end, length=70):
+        self.end = end
+        self.length = length
+
+    def render(self, progress):
+        """Render the progress bar"""
+        assert progress >= 0, "Progress must be positive"
+
+        pct = progress / self.end
+        n_bars = int(pct * self.length)
+        bars = "=" * n_bars
+        if n_bars < self.length:
+            bars += ">"
+
+        return f"[{bars:70s}]  {pct:4.0%}  {progress:8d} / {self.end:8d}"
