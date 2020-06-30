@@ -20,8 +20,7 @@ def read_heals(source, **kwargs):
 
         import readers.read_from_raw as raw
 
-        log_lines = raw.get_lines(source)
-        heals, periodics = raw.get_heals(log_lines, **kwargs)
+        heals, periodics = raw.get_heals(source, **kwargs)
         absorbs = []
     else:
         # Try assuming source is just the code

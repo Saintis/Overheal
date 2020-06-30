@@ -3,6 +3,7 @@ Read data from WCL API.
 
 By: Filip Gokstorp (Saintis), 2020
 """
+from collections import namedtuple
 import os
 import requests
 from json.decoder import JSONDecodeError
@@ -12,6 +13,9 @@ from .event_types import HealEvent, DamageTakenEvent
 from .processor import AbstractProcessor
 
 from backend import ProgressBar
+
+
+APIEncounter = namedtuple("APIEncounter", ("boss", "start", "end"))
 
 
 # First try environment key
@@ -288,7 +292,30 @@ class APIProcessor(AbstractProcessor):
 
         return damage
 
-    def process(self):
+    def get_encounters(self):
+        fights = self.get_fights()
+
+        encounters = []
+        for f in fights:
+            if f.boss == 0:
+                continue
+
+            encounters.append(APIEncounter(f.name, f.start, f.end))
+
+        return encounters
+
+    def process(self, start=None, end=None):
+        damage = self.get_damage(start, end)
+        heals, periodics, absorbs = self.get_heals(start, end)
+
+        heals = sorted(heals + periodics + absorbs, key=lambda e: e[0])
+        all_events = sorted(damage + heals + periodics + absorbs, key=lambda e: e[0])
+
+        self.damage = damage
+        self.heals = heals
+        self.all_events = all_events
+
+    def get_deaths(self):
         pass
 
 

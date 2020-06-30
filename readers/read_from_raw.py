@@ -3,25 +3,51 @@ Functions for processing raw combat logs from WoW Classic.
 
 By: Filip Gokstorp (Saintis-Dreadmist), 2020
 """
+from collections import namedtuple
 import os
 import io
 from datetime import datetime
 
 from backend import get_player_name, get_time_stamp
 from .event_types import HealEvent, DamageTakenEvent
+from .processor import AbstractProcessor
 
+ENCOUNTER_START = "ENCOUNTER_START"
+ENCOUNTER_END = "ENCOUNTER_END"
 STR_P_TIME = "%m/%d %H:%M:%S.%f"
 
 
-class RawProcessor:
+RawEncounter = namedtuple("RawEncounter", ("boss", "start", "end"))
+
+
+def get_lines(log_file):
+    """
+    Load in lines from WoW Classic combat log.
+
+    :param log_file: path to the log file
+    """
+    lines = ()
+    try:
+        fh = io.open(log_file, encoding="utf-8")
+        lines = fh.readlines()
+    except FileNotFoundError:
+        print(f"Could not find `{log_file}`!")
+        print(f"Looking in `{os.getcwd()}`, please double check your log file is there.")
+        exit(1)
+
+    return lines
+
+
+class RawProcessor(AbstractProcessor):
     """Helper class for processing heal lines"""
 
-    def __init__(self, character_name=None, normalise_time=False, include_damage=False):
+    def __init__(self, source, character_name=None, normalise_time=False, include_damage=False):
         """
         :param character_name: Character name to filter for.
         """
+        super(RawProcessor, self).__init__(source, character_name)
+
         self.ref_time = None
-        self.character_name = character_name
         self.include_damage = include_damage
 
         if isinstance(normalise_time, datetime):
@@ -29,13 +55,7 @@ class RawProcessor:
         else:
             self.normalise_time = normalise_time
 
-        self.all_events = []
-        self.heals = []
-        self.periodic_heals = []
-        self.damage = []
-
-        self.resurrections = []
-        self.deaths = []
+        self.log_lines = get_lines(source)
 
     def get_local_timestamp(self, part):
         """Gets local timestamp relative to start of encounter."""
@@ -50,8 +70,19 @@ class RawProcessor:
 
         return timestamp
 
-    def process_lines(self, lines):
-        """Process lines from raw log"""
+    def process(self, start=None, end=None):
+        """
+        Process lines from raw log.
+
+        Use start and end to limit log to specific encounters. Start and end are line numbers.
+        """
+        if start is None:
+            start = 0
+        if end is None:
+            end = -1
+
+        lines = self.log_lines[start:end]
+
         for line in lines:
             if "SPELL_HEAL," in line:
                 self.process_heal(line, False)
@@ -165,41 +196,61 @@ class RawProcessor:
 
         the_list.append((timestamp, unit_id, name))
 
+    def get_deaths(self):
+        """Gets deaths in log."""
+        for line in self.log_lines:
+            line_parts = line.split(",")
 
-def get_lines(log_file):
-    """
-    Load in lines from WoW Classic combat log.
+            if "UNIT_DIED" not in line_parts[0]:
+                continue
 
-    :param log_file: path to the log file
-    """
-    lines = ()
-    try:
-        fh = io.open(log_file, encoding="utf-8")
-        lines = fh.readlines()
-    except FileNotFoundError:
-        print(f"Could not find `{log_file}`!")
-        print(f"Looking in `{os.getcwd()}`, please double check your log file is there.")
-        exit(1)
+            unit_id = line_parts[5]
+            if "Creature" in line_parts[5]:
+                continue
 
-    return lines
+            timestamp = get_time_stamp(line_parts[0])
+            player = get_player_name(line_parts[6])
+
+            self.deaths.append((timestamp, unit_id, player))
+
+        return self.deaths
+
+    def get_encounters(self):
+        encounters = []
+        encounter_boss = None
+        start = 0
+
+        for i, line in enumerate(self.log_lines):
+            if ENCOUNTER_START in line:
+                encounter_boss = line.split(",")[2].strip('"')
+                start = i
+
+            if ENCOUNTER_END in line:
+                boss = line.split(",")[2].strip('"')
+                if boss != encounter_boss:
+                    raise ValueError(f"Non-matching encounter end {encounter_boss} != {boss}")
+
+                encounters.append(RawEncounter(encounter_boss, start, i))
+
+        return encounters
 
 
-def get_heals(log_lines, character_name=None, normalise_time=True, **_):
-    line_processor = RawProcessor(normalise_time=normalise_time, character_name=character_name)
-    line_processor.process_lines(log_lines)
+def get_heals(source, character_name=None, normalise_time=True, **_):
+    line_processor = RawProcessor(source, normalise_time=normalise_time, character_name=character_name)
+    line_processor.process()
 
     return line_processor.heals, line_processor.periodic_heals
 
 
-def get_heals_and_damage(log_lines, character_name=None, normalise_time=True, **_):
-    line_processor = RawProcessor(normalise_time=normalise_time, character_name=character_name, include_damage=True)
-    line_processor.process_lines(log_lines)
+def get_heals_and_damage(source, character_name=None, normalise_time=True, **_):
+    line_processor = RawProcessor(source, normalise_time=normalise_time, character_name=character_name, include_damage=True)
+    line_processor.process()
 
     return line_processor.all_events
 
 
-def get_processed_lines(log_lines, character_name=None, normalise_time=True, **_):
-    line_processor = RawProcessor(normalise_time=normalise_time, character_name=character_name, include_damage=True)
-    line_processor.process_lines(log_lines)
+def get_processed_lines(source, character_name=None, normalise_time=True, **_):
+    line_processor = RawProcessor(source, normalise_time=normalise_time, character_name=character_name, include_damage=True)
+    line_processor.process()
 
     return line_processor
