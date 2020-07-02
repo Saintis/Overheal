@@ -60,7 +60,7 @@ def get_casts(log_lines):
     batch_time = None
     batch_i = 0
 
-    for line in log_lines:
+    for i, line in enumerate(log_lines):
         line_parts = line.split(",")
 
         if "Player" not in line_parts[1]:
@@ -91,7 +91,38 @@ def get_casts(log_lines):
                 cast = casting_dict.pop(source)
                 (start_time, sid, _) = cast
 
-                cast = (source, start_time, spell_time, sid, f"[Cancelled]")
+                # scan forward to see if cast success got batched
+                spell_complete = None
+                j = i
+                while True:
+                    j += 1
+                    next_line = log_lines[j]
+                    nlp = next_line.split(",")
+                    n_timestamp = get_time_stamp(nlp[0])
+                    if n_timestamp > spell_time:
+                        break
+
+                    if "SPELL_CAST_SUCCESS" not in nlp[0]:
+                        continue
+
+                    n_source = get_player_name(nlp[2])
+                    if n_source != source:
+                        continue
+
+                    n_sid = nlp[9]
+                    if sid != n_sid:
+                        continue
+
+                    # same source and sid, spell was completed
+                    target = get_player_name(nlp[6])
+                    spell_complete = target
+                    break
+
+                if spell_complete is not None:
+                    cast = (source, start_time, spell_time, sid, spell_complete)
+                else:
+                    cast = (source, start_time, spell_time, sid, f"[Cancelled]")
+
                 cast_list.append(cast)
 
             casting_dict[source] = (spell_time, spell_id, line)
@@ -104,14 +135,20 @@ def get_casts(log_lines):
 
             if source in casting_dict:
                 start_time, start_id, start_line = casting_dict.pop(source)
+
+                if spell_id != start_id:
+                    if start_time == success_time:
+                        # start and success batched, ignore this success and add start back
+                        casting_dict[source] = (start_time, start_id, start_line)
+                        continue
+
+                    # spell was cancelled with an instant effect
+                    cast = (source, start_time, success_time, start_id, f"[Cancelled]")
+                    cast_list.append(cast)
+
             else:
                 # instant cast
                 start_time = success_time
-                start_id = spell_id
-
-            if spell_id != start_id:
-                # something went weird, removing start and discounting this success
-                continue
 
             if source not in casts:
                 casts[source] = []
@@ -279,7 +316,7 @@ def plot_casts(casts_dict, encounter, start=None, end=None, mark=None, anonymize
 
     title = "Casts"
     if encounter:
-        title += " during " + encounter
+        title += f" during {encounter}"
     plt.title(title)
     plt.xlabel("Fight duration [s]")
     plt.grid(axis="x")
@@ -304,7 +341,11 @@ def plot_casts(casts_dict, encounter, start=None, end=None, mark=None, anonymize
         plt.text(x, y, player, ha="right", va="top")
         last_ts = timestamp
 
-    e_name = encounter.split()[0]
+    if encounter:
+        e_name = encounter.short_name()
+    else:
+        e_name = "all"
+
     fig_path = f"figs/casts_{e_name}.png"
     plt.savefig(fig_path)
     plt.close()
@@ -368,10 +409,9 @@ def analyse_casts(source, encounter=None, all=False, **kwargs):
     log = raw.get_lines(source)
     encounter, encounter_lines, encounter_start, encounter_end = encounter_picker(log, encounter)
 
-    casts, heals = get_casts(encounter_lines)
+    casts, _ = get_casts(encounter_lines)
 
     casts_dict = dict()
-
     for c in casts:
         s = c[0]
         if not all and s not in HEALERS:
@@ -384,7 +424,10 @@ def analyse_casts(source, encounter=None, all=False, **kwargs):
 
     deaths = get_deaths(encounter_lines)
 
-    plot_casts(casts_dict, encounter, start=encounter_start, end=encounter_end, deaths=deaths, **kwargs)
+    if encounter:
+        # only plot casts for an encounter
+        plot_casts(casts_dict, encounter, start=encounter_start, end=encounter_end, deaths=deaths, **kwargs)
+
     analyse_activity(casts_dict, encounter, encounter_start, encounter_end)
 
 
