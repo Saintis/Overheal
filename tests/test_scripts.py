@@ -1,4 +1,8 @@
-"""Test for the scripts."""
+"""
+Tests for the scripts.
+
+By: Filip Gökstorp (Saintis-Dreadmist), 2020
+"""
 import os
 import pytest
 

@@ -3,6 +3,7 @@ Script that estimates value of 1% crit.
 
 By: Filip Gokstorp (Saintis), 2020
 """
+import readers
 from readers import read_heals
 from backend import group_processed_lines
 
@@ -127,7 +128,14 @@ def print_results(data):
 
 
 def overheal_crit(source, character_name, spell_id=None, **kwargs):
-    heal_lines, _, _ = read_heals(source, character_name=character_name, **kwargs)
+    processor = readers.get_processor(source, character_name=character_name)
+
+    encounter = processor.select_encounter()
+
+    processor.process(encounter=encounter)
+    heal_lines = processor.heals
+
+    # heal_lines, _, _ = read_heals(source, character_name=character_name, **kwargs)
 
     # Group lines
     heal_lines = group_processed_lines(heal_lines, False, spell_id=spell_id)
