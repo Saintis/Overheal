@@ -6,6 +6,26 @@ By: Filip Gokstorp (Saintis-Dreadmist), 2020
 from abc import ABC, abstractmethod
 
 
+class Encounter:
+    """Class containing encounter data."""
+
+    def __init__(self, boss, start, end):
+        self.boss = boss
+        self.start = start
+        self.end = end
+
+    def __str__(self):
+        return self.boss
+
+    def short_name(self):
+        name_parts = self.boss.split()
+
+        if name_parts[0] == "The":
+            return name_parts[1]
+
+        return name_parts[0]
+
+
 class AbstractProcessor(ABC):
     """Helper class for processing data from raw logs or WCL"""
 
@@ -48,3 +68,31 @@ class AbstractProcessor(ABC):
     def process(self):
         """Process data from the source."""
         pass
+
+    def select_encounter(self):
+        encounters = self.encounters
+
+        print("Found the following encounters:")
+        print("")
+
+        print(f"  {0:2d})  Whole log")
+
+        for i, e in enumerate(encounters):
+            print(f"  {i+1:2d})  {e.boss}")
+
+        print("")
+
+        while True:
+            i_enc = input("Encounter to analyse: ")
+            try:
+                i_enc = int(i_enc)
+
+                if 0 <= i_enc <= len(encounters):
+                    break
+            except ValueError:
+                print(f"Please enter an integer between {0} and {len(encounters)}")
+
+        if i_enc == 0:
+            return None
+
+        return encounters[i_enc - 1]

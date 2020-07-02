@@ -3,21 +3,18 @@ Functions for processing raw combat logs from WoW Classic.
 
 By: Filip Gokstorp (Saintis-Dreadmist), 2020
 """
-from collections import namedtuple
 import os
 import io
 from datetime import datetime
 
-from backend import get_player_name, get_time_stamp
 from .event_types import HealEvent, DamageTakenEvent
-from .processor import AbstractProcessor
+from .processor import AbstractProcessor, Encounter
+
+from backend import get_player_name, get_time_stamp
 
 ENCOUNTER_START = "ENCOUNTER_START"
 ENCOUNTER_END = "ENCOUNTER_END"
 STR_P_TIME = "%m/%d %H:%M:%S.%f"
-
-
-RawEncounter = namedtuple("RawEncounter", ("boss", "start", "end"))
 
 
 def get_lines(log_file):
@@ -70,12 +67,16 @@ class RawProcessor(AbstractProcessor):
 
         return timestamp
 
-    def process(self, start=None, end=None):
+    def process(self, start=None, end=None, encounter=None):
         """
         Process lines from raw log.
 
         Use start and end to limit log to specific encounters. Start and end are line numbers.
         """
+        if isinstance(encounter, Encounter):
+            start = encounter.start if start is None else start
+            end = encounter.end if end is None else end
+
         if start is None:
             start = 0
         if end is None:
@@ -230,7 +231,7 @@ class RawProcessor(AbstractProcessor):
                 if boss != encounter_boss:
                     raise ValueError(f"Non-matching encounter end {encounter_boss} != {boss}")
 
-                encounters.append(RawEncounter(encounter_boss, start, i))
+                encounters.append(Encounter(encounter_boss, start, i + 1))
 
         return encounters
 

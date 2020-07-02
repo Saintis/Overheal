@@ -10,12 +10,9 @@ from json.decoder import JSONDecodeError
 from datetime import datetime
 
 from .event_types import HealEvent, DamageTakenEvent
-from .processor import AbstractProcessor
+from .processor import AbstractProcessor, Encounter
 
 from backend import ProgressBar
-
-
-APIEncounter = namedtuple("APIEncounter", ("boss", "start", "end"))
 
 
 # First try environment key
@@ -75,7 +72,8 @@ class APIProcessor(AbstractProcessor):
 
     def get_fights(self):
         url = f"{API_ROOT}/report/fights/{self.code}"
-        return _get_api_request(url)
+        data = _get_api_request(url)
+        return data
 
     def get_player_names(self):
         fight_data = self.get_fights()
@@ -90,7 +88,7 @@ class APIProcessor(AbstractProcessor):
 
         self._player_names = player_names
 
-    def get_heals(self, start=None, end=None):
+    def get_heals(self, start=None, end=None, encounter=None):
         """Gets all heals for the log"""
         code = self.source
         for_player = self.character_name
@@ -293,18 +291,22 @@ class APIProcessor(AbstractProcessor):
         return damage
 
     def get_encounters(self):
-        fights = self.get_fights()
+        fights = self.get_fights()["fights"]
 
         encounters = []
         for f in fights:
-            if f.boss == 0:
+            if f["boss"] == 0:
                 continue
 
-            encounters.append(APIEncounter(f.name, f.start, f.end))
+            encounters.append(Encounter(f["name"], f["start_time"], f["end_time"]))
 
         return encounters
 
-    def process(self, start=None, end=None):
+    def process(self, start=None, end=None, encounter=None):
+        if isinstance(encounter, Encounter):
+            start = encounter.start if start is None else start
+            end = encounter.end if end is None else end
+
         damage = self.get_damage(start, end)
         heals, periodics, absorbs = self.get_heals(start, end)
 
@@ -369,41 +371,3 @@ def get_heals_and_damage(code, start=None, end=None, character_name=None, **_):
 
     # join damage, heals, periodics and sort by timestamp
     return sorted(damage + heals + periodics, key=lambda e: e[0])
-
-
-def _test_code():
-    import argparse
-
-    parser = argparse.ArgumentParser("Tests the api reading code.")
-
-    parser.add_argument("code")
-    parser.add_argument("-n", "--name")
-
-    args = parser.parse_args()
-
-    # heals, periodics, absorbs = get_heals(args.code, character_name=args.name)
-    # print("Heals")
-    # for h in heals[:20]:
-    #     print("  ", *h)
-    #
-    # print("Periodics")
-    # for h in periodics[:20]:
-    #     print("  ", *h)
-    #
-    # print("Absorbs")
-    # for h in absorbs[:20]:
-    #     print("  ", *h)
-
-    # damage = get_damage(args.code, character_name=args.name)
-    # print("Damage")
-    # for e in damage:
-    #     print("  ", *e)
-
-    all_events = get_heals_and_damage(args.code, character_name=args.name)
-    print("All events")
-    for e in all_events[:50]:
-        print("  ", *e)
-
-
-if __name__ == "__main__":
-    _test_code()

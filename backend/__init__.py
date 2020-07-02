@@ -5,6 +5,9 @@ By: Filip Gokstorp (Saintis), 2020
 """
 import hashlib
 from datetime import datetime
+from collections import namedtuple
+
+from readers.processor import Encounter
 
 
 ENCOUNTER_START = "ENCOUNTER_START"
@@ -77,10 +80,20 @@ def list_encounters(log_lines):
     """List all found encounters."""
     encounters = []
 
-    for line in log_lines:
+    encounter_boss = None
+    start = 0
+
+    for i, line in enumerate(log_lines):
         if ENCOUNTER_START in line:
-            encounter = line.split(",")[2].strip('"')
-            encounters.append(encounter)
+            encounter_boss = line.split(",")[2].strip('"')
+            start = i
+
+        if ENCOUNTER_END in line:
+            boss = line.split(",")[2].strip('"')
+            if boss != encounter_boss:
+                raise ValueError(f"Non-matching encounter end {encounter_boss} != {boss}")
+
+            encounters.append(Encounter(encounter_boss, start, i + 1))
 
     return encounters
 
@@ -91,8 +104,8 @@ def select_encounter(encounters):
 
     print(f"  {0:2d})  Whole log")
 
-    for i, encounter in enumerate(encounters):
-        print(f"  {i+1:2d})  {encounter}")
+    for i, e in enumerate(encounters):
+        print(f"  {i+1:2d})  {e.boss}")
 
     print("")
 
@@ -126,28 +139,16 @@ def lines_for_encounter(log, encounter):
 
         return log, t_start, t_end
 
-    in_encounter = False
-    encounter_lines = []
-    t_start = None
-    str_end = None
+    start = encounter.start
+    end = encounter.end
 
-    for line in log:
-        if ENCOUNTER_START in line and encounter in line:
-            str_start = line.split("  ")[0]
-            t_start = datetime.strptime(str_start, STR_P_TIME)
-            in_encounter = True
+    encounter_lines = log[start:end + 1]
 
-        if in_encounter:
-            encounter_lines.append(line)
+    line_start = log[start].split("  ")[0]
+    t_start = datetime.strptime(line_start, STR_P_TIME)
 
-        if ENCOUNTER_END in line and encounter in line:
-            str_end = line.split("  ")[0]
-            break
-
-    if str_end is None:
-        print("Did not find encounter end!")
-        str_end = log[-1].split("  ")[0]
-
+    line_end = log[end]
+    str_end = line_end.split("  ")[0]
     t_end = datetime.strptime(str_end, STR_P_TIME)
 
     return encounter_lines, t_start, t_end
