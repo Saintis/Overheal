@@ -156,7 +156,8 @@ def sum_spells(spells, talents=None):
         total_data["net_heal"] += net_heal
         total_data["mana"] += casts * mana
         total_data["coef"] += casts * coef
-        total_data["crit_coef"] += casts * coef + crits * coef * 0.5
+        # total_data["crit_coef"] += casts * coef + crits * coef * 0.5
+        total_data["crit_coef"] += casts * coef * 0.5 * can_crit
         total_data["crit_heal"] += 0.5 * gross_heal * can_crit
         total_data["crits"] += crits
         total_data["can_crit"] += casts * can_crit
@@ -218,10 +219,14 @@ def analyse_spell(source, character_name, encounter=None, reduce_crits=False, sp
     net_heal = total_data["net_heal"]
     crit_heal = total_data["crit_heal"]
 
+    crit_heal = 23438
+    gross_heal = 53502
+
     g_coef = total_data["coef"]
-    c_coef = total_data["crit_coef"]
 
     crit_rate = crits / can_crit
+
+    c_coef = g_coef + crit_rate * total_data["crit_coef"]
 
     # reduced sp data
     dh = 20.0
@@ -250,12 +255,14 @@ def analyse_spell(source, character_name, encounter=None, reduce_crits=False, sp
     net_hpm = net_heal / mana
 
     print(f"  Fight duration:  {encounter_length:.1f}s")
+    print(f"  Avg cast time:   {encounter_length / casts:.3f}s")
     print()
     print(f"  Gross heal: {gross_heal:,.0f}")
+    print(f"  Crit heal:  {crit_heal:,.0f}")
     print(f"  Net heal:   {net_heal:,.0f}")
     print(f"  Used mana:  {mana:,.0f}")
     print()
-    print(f"  Heal coef:  {n_coef:.2f}  ({g_coef:.2f}, {c_coef:.2f})")
+    print(f"  Heal coef:  {n_coef:.2f}  ({g_coef:.3f}, {c_coef:.3f})")
 
     print()
 
