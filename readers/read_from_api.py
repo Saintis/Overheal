@@ -3,7 +3,6 @@ Read data from WCL API.
 
 By: Filip Gokstorp (Saintis), 2020
 """
-from collections import namedtuple
 import os
 import requests
 from json.decoder import JSONDecodeError
@@ -298,7 +297,12 @@ class APIProcessor(AbstractProcessor):
             if f["boss"] == 0:
                 continue
 
-            encounters.append(Encounter(f["name"], f["start_time"], f["end_time"]))
+            start = f["start_time"]
+            end = f["end_time"]
+            start_t = datetime.fromtimestamp(start / 1000.0).time()
+            end_t = datetime.fromtimestamp(end / 1000.0).time()
+
+            encounters.append(Encounter(f["name"], start, end, start_t, end_t))
 
         return encounters
 

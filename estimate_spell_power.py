@@ -47,7 +47,7 @@ def process_spell(spell_id, spell_lines, heal_increase=0.0):
 
     # Include heal increase from Improved Renew or Spiritual Healing
     spell_heal = sd.spell_heal(spell_id)
-    spell_heal *= (1.0 + heal_increase)
+    spell_heal *= 1.0 + heal_increase
 
     if spell_heal == 0:
         # Unknown or 0 base heal, cannot estimate +heal

@@ -30,6 +30,7 @@ def pick_heal_target(deficits, applied_heals):
     d = min(dd, key=dd.get)
     return d, dd[d]
 
+
 #
 # def pick_spell(deficit, mana, h, spell_id=None, talents=None):
 #     # pick spell by deficit

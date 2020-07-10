@@ -9,10 +9,22 @@ from abc import ABC, abstractmethod
 class Encounter:
     """Class containing encounter data."""
 
-    def __init__(self, boss, start, end):
+    def __init__(self, boss, start, end, start_t, end_t):
+        """
+        Creates a new encounter object to start and end data in
+        :param boss: the boss name
+        :param start: the start marker (line number or timestamp)
+        :param end: the end marker (line number or timestamp)
+        :param start_t: the timestamp of the start of the encounter
+        :param end_t: the timestamp of the end of the encounter
+        """
         self.boss = boss
         self.start = start
         self.end = end
+        self.start_t = start_t
+        self.end_t = end_t
+
+        self.duration = (end_t - start_t).total_seconds()
 
     def __str__(self):
         return self.boss
@@ -69,13 +81,15 @@ class AbstractProcessor(ABC):
         """Process data from the source."""
         pass
 
-    def select_encounter(self):
+    def select_encounter(self, encounter=None):
         encounters = self.encounters
+
+        if encounter:
+            return encounters[encounter]
 
         print("Found the following encounters:")
         print("")
-
-        print(f"  {0:2d})  Whole log")
+        print("   0)  Whole log")
 
         for i, e in enumerate(encounters):
             print(f"  {i+1:2d})  {e.boss}")
@@ -90,7 +104,7 @@ class AbstractProcessor(ABC):
                 if 0 <= i_enc <= len(encounters):
                     break
             except ValueError:
-                print(f"Please enter an integer between {0} and {len(encounters)}")
+                print(f"Please enter an integer between 0 and {len(encounters)}")
 
         if i_enc == 0:
             return None

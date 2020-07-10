@@ -4,7 +4,6 @@ Script that estimates value of 1% crit.
 By: Filip Gokstorp (Saintis), 2020
 """
 import readers
-from readers import read_heals
 from backend import group_processed_lines
 
 import spell_data as sd
@@ -167,9 +166,12 @@ def main(argv=None):
     os.makedirs("figs/crit", exist_ok=True)
 
     parser = OverhealParser(
-        description="Analyses log and estimates healing of crits. Counts up the healing and overhealing done by each "
-        "found crit. Prints out extra healing done by each crit on average and the equivalent +heal worth "
-        "for each spell, and for the average spell profile over the whole combat log.",
+        description="""\
+Analyses a combat log and calculates the additional healing any crits gave. 
+Counts up the healing and overhealing done by each found crit. 
+Prints out extra healing done by each percentage of crit, on average, and the equivalent +heal worth, 
+for each spell, and for the average spell profile over the whole combat log.
+""",
         need_character=True,
         accept_spell_id=True,
     )

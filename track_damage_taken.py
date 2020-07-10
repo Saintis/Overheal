@@ -7,8 +7,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from backend import encounter_picker
-from readers import read_from_raw as raw
+from readers import get_processor
 from damage.damage_taken import raid_damage_taken, character_damage_taken
 
 
@@ -163,31 +162,23 @@ def plot_raid_damage(
     plt.close()
 
 
-def main(argv=None):
-    from backend.parser import OverhealParser
+def track_damage_taken(source, character_name=None, encounter=None, raid=False, verbose=False, path=None):
+    processor = get_processor(source)
+    encounter = processor.select_encounter(encounter)
+    processor.process(encounter=encounter)
 
-    parser = OverhealParser(accept_character=True, accept_encounter=True)
-    parser.add_argument("--raid", action="store_true")
-    parser.add_argument("-v", "--verbose", action="store_true", help="Increases verbosity, saves health data.")
-    parser.add_argument("--path")
+    events = processor.all_events
+    deaths = processor.deaths
+    resurrections = processor.resurrections
 
-    args = parser.parse_args(argv)
+    encounter_time = encounter.duration
 
-    lines = raw.get_lines(args.source)
-    encounter, encounter_lines, encounter_start, encounter_end = encounter_picker(lines, args.encounter)
-    data = raw.get_processed_lines(encounter_lines, ref_time=encounter_start)
-    events = data.all_events
-    deaths = data.deaths
-    resurrections = data.resurrections
+    if raid or character_name is None:
+        times, deficits, _, _, min_deficits = raid_damage_taken(events, verbose=verbose)
 
-    encounter_time = (encounter_end - encounter_start).total_seconds()
-
-    if args.raid or args.character_name is None:
-        times, deficits, _, _, min_deficits = raid_damage_taken(events, verbose=args.verbose)
-
-        if args.character_name:
+        if character_name:
             times_nc, deficits_nc, _, _, min_deficits = raid_damage_taken(
-                events, character_name=args.character_name, verbose=args.verbose
+                events, character_name=character_name, verbose=verbose
             )
         else:
             times_nc = times
@@ -199,15 +190,15 @@ def main(argv=None):
             times_nc["all"],
             deficits_nc["all"],
             min_deficits=min_deficits,
-            character_name=args.character_name,
+            character_name=character_name,
             encounter=encounter,
             deaths=deaths,
             resurrections=resurrections,
-            path=args.path,
+            path=path,
         )
     else:
         times, deficits, nets, health_pcts, health_ests = character_damage_taken(
-            events, args.character_name, verbose=args.verbose
+            events, character_name, verbose=verbose
         )
         plot_character_damage(
             times,
@@ -217,9 +208,29 @@ def main(argv=None):
             health_ests,
             encounter_time,
             encounter=encounter,
-            character_name=args.character_name,
-            path=args.path,
+            character_name=character_name,
+            path=path,
         )
+
+
+def main(argv=None):
+    from backend.parser import OverhealParser
+
+    parser = OverhealParser(accept_character=True, accept_encounter=True)
+    parser.add_argument("--raid", action="store_true")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Increases verbosity, saves health data.")
+    parser.add_argument("--path")
+
+    args = parser.parse_args(argv)
+
+    track_damage_taken(
+        args.source,
+        character_name=args.character_name,
+        encounter=args.encounter,
+        raid=args.raid,
+        verbose=args.verbose,
+        path=args.path,
+    )
 
 
 if __name__ == "__main__":

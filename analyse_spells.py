@@ -138,7 +138,17 @@ def group_spells(spell_casts, spell_heals, spell_periodics, spell_absorbs, reduc
 
 def sum_spells(spells, talents=None):
     total_data = dict(
-        casts=0, gross_heal=0, overheal=0, net_heal=0, mana=0, coef=0, crit_coef=0, gross_crit=0, net_crit=0, crits=0, can_crit=0
+        casts=0,
+        gross_heal=0,
+        overheal=0,
+        net_heal=0,
+        mana=0,
+        coef=0,
+        crit_coef=0,
+        gross_crit=0,
+        net_crit=0,
+        crits=0,
+        can_crit=0,
     )
     spell_data = dict()
 
@@ -166,9 +176,7 @@ def sum_spells(spells, talents=None):
 
         average_net_heal = net_heal / casts if casts > 0 else net_heal
         crit_heal = 0.5 * can_crit * gross_heal / casts if casts > 0 else 0.5 * can_crit * gross_heal
-        spell_data[spell_id] = dict(
-            spell, mana=mana, net_heal=average_net_heal, coef=coef, crit_heal=crit_heal
-        )
+        spell_data[spell_id] = dict(spell, mana=mana, net_heal=average_net_heal, coef=coef, crit_heal=crit_heal)
 
         gross_coef = casts * coef
 
@@ -176,7 +184,7 @@ def sum_spells(spells, talents=None):
             net_crit = 0
         else:
             # extrapolate crit value for non-crit casts
-            net_crit *= (casts / crits)
+            net_crit *= casts / crits
 
         total_data["casts"] += casts
         total_data["net_heal"] += net_heal
@@ -193,7 +201,9 @@ def sum_spells(spells, talents=None):
     return total_data, spell_data
 
 
-def analyse_spell(source, character_name, encounter=None, reduce_crits=False, spell_power=None, zandalar_buff=False, **_):
+def analyse_spell(
+    source, character_name, encounter=None, reduce_crits=False, spell_power=None, zandalar_buff=False, **_
+):
     if spell_power is None:
         spell_power = 0
 
@@ -374,14 +384,20 @@ def main(argv=None):
         description="Analyses an encounter and prints information about the spells used.",
         need_character=True,
         accept_spell_power=True,
-        accept_encounter=True
+        accept_encounter=True,
     )
     parser.add_argument("-r", "--reduce_crits", action="store_true")
     parser.add_argument("-Z", "--zandalar_buff", action="store_true")
 
     args = parser.parse_args(args=argv)
 
-    analyse_spell(args.source, args.character_name, spell_power=args.spell_power, encounter=args.encounter, zandalar_buff=args.zandalar_buff)
+    analyse_spell(
+        args.source,
+        args.character_name,
+        spell_power=args.spell_power,
+        encounter=args.encounter,
+        zandalar_buff=args.zandalar_buff,
+    )
 
 
 if __name__ == "__main__":

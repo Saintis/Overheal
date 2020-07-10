@@ -76,6 +76,7 @@ class RawProcessor(AbstractProcessor):
         if isinstance(encounter, Encounter):
             start = encounter.start if start is None else start
             end = encounter.end if end is None else end
+            self.ref_time = encounter.start_t
 
         if start is None:
             start = 0
@@ -220,18 +221,24 @@ class RawProcessor(AbstractProcessor):
         encounters = []
         encounter_boss = None
         start = 0
+        start_t = None
 
         for i, line in enumerate(self.log_lines):
             if ENCOUNTER_START in line:
-                encounter_boss = line.split(",")[2].strip('"')
+                line_parts = line.split(",")
+                encounter_boss = line_parts[2].strip('"')
+                start_t = get_time_stamp(line_parts[0])
                 start = i
 
             if ENCOUNTER_END in line:
-                boss = line.split(",")[2].strip('"')
+                line_parts = line.split(",")
+                boss = line_parts[2].strip('"')
+                end_t = get_time_stamp(line_parts[0])
+
                 if boss != encounter_boss:
                     raise ValueError(f"Non-matching encounter end {encounter_boss} != {boss}")
 
-                encounters.append(Encounter(encounter_boss, start, i))
+                encounters.append(Encounter(encounter_boss, start, i, start_t, end_t))
 
         return encounters
 
