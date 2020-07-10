@@ -93,7 +93,7 @@ def list_encounters(log_lines):
             if boss != encounter_boss:
                 raise ValueError(f"Non-matching encounter end {encounter_boss} != {boss}")
 
-            encounters.append(Encounter(encounter_boss, start, i + 1))
+            encounters.append(Encounter(encounter_boss, start, i))
 
     return encounters
 
