@@ -10,7 +10,7 @@ from datetime import datetime
 from .event_types import HealEvent, DamageTakenEvent
 from .processor import AbstractProcessor, Encounter
 
-from backend import get_player_name, get_time_stamp
+from ..backend import get_player_name, get_time_stamp
 
 ENCOUNTER_START = "ENCOUNTER_START"
 ENCOUNTER_END = "ENCOUNTER_END"
@@ -251,14 +251,18 @@ def get_heals(source, character_name=None, normalise_time=True, **_):
 
 
 def get_heals_and_damage(source, character_name=None, normalise_time=True, **_):
-    line_processor = RawProcessor(source, normalise_time=normalise_time, character_name=character_name, include_damage=True)
+    line_processor = RawProcessor(
+        source, normalise_time=normalise_time, character_name=character_name, include_damage=True
+    )
     line_processor.process()
 
     return line_processor.all_events
 
 
 def get_processed_lines(source, character_name=None, normalise_time=True, **_):
-    line_processor = RawProcessor(source, normalise_time=normalise_time, character_name=character_name, include_damage=True)
+    line_processor = RawProcessor(
+        source, normalise_time=normalise_time, character_name=character_name, include_damage=True
+    )
     line_processor.process()
 
     return line_processor

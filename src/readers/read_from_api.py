@@ -11,7 +11,7 @@ from datetime import datetime
 from .event_types import HealEvent, DamageTakenEvent
 from .processor import AbstractProcessor, Encounter
 
-from backend import ProgressBar
+from ..backend import ProgressBar
 
 
 # First try environment key
@@ -323,6 +323,99 @@ class APIProcessor(AbstractProcessor):
 
     def get_deaths(self):
         pass
+
+    def get_casts(self, start=None, end=None, encounter=None):
+        """Get casts from WCL"""
+
+        "https://classic.warcraftlogs.com:443/v1/report/events/casts/rtQKDVjy83FX296h?start=616959&end=657115"
+        if start is None:
+            start = 0
+
+        if end is None:
+            end = start + 3 * 60 * 60 * 1000  # look at up to 3h of data
+
+        names = self.player_names
+
+        damage = []
+
+        next_start = start
+
+        print("Fetching casts from WCL...")
+        progress_bar = ProgressBar(end - start, length=70)
+
+        # will have to loop to get results
+        request_more = True
+        while request_more:
+            url = f"{API_ROOT}/report/events/casts/{self.code}"
+
+            print(progress_bar.render(next_start - start), end="\r")
+
+            data = _get_api_request(url, start=next_start, end=end)
+            events = data["events"]
+            if "nextPageTimestamp" in data:
+                next_start = data["nextPageTimestamp"]
+            else:
+                request_more = False
+
+            for e in events:
+                try:
+                    timestamp = e["timestamp"]
+                    timestamp = datetime.fromtimestamp(timestamp / 1000.0).time()
+                    # spell_id = str(e["ability"]["guid"])
+
+                    e_type = e["type"]
+
+                    # if "sourceID" not in e:
+                    #     # heal not from a player, skipping
+                    #     continue
+
+                    target_id = e["targetID"]
+                    target = names.get(target_id, f"[pid {target_id}]")
+
+                    if self.character_name and target != self.character_name:
+                        continue
+
+                    source_id = e.get("sourceID", None)
+
+                    if source_id is None:
+                        source = None
+                    else:
+                        source = names.get(source_id, f"[pid {source_id}]")
+
+                    # target = names.get(target, f"[pid {target}]")
+                    health_pct = e.get("hitPoints", None)
+                    # event_type = e["type"]
+
+                    amount = e["amount"]
+                    mitigated = e.get("mitigated", 0)
+                    overkill = e.get("overkill", -1)
+
+                    # is_crit = e.get("hitType", 1) == 2
+
+                    if amount == 0:
+                        # ignore attacks that do no damage
+                        continue
+
+                    event = DamageTakenEvent(
+                        timestamp,
+                        source,
+                        source_id,
+                        0,
+                        target,
+                        target_id,
+                        health_pct,
+                        -(amount + mitigated),
+                        -mitigated,
+                        -overkill,
+                    )
+                    damage.append(event)
+                except Exception as ex:
+                    print("Exception while handling line", e)
+                    print(ex)
+
+        print(progress_bar.render(end - start))
+
+        return damage
 
 
 def get_heals(code, start=None, end=None, character_name=None, **_):
