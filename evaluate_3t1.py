@@ -7,8 +7,8 @@ Whenever a spell is cast, check if the previous spell as a FH and new spell was 
 By: Filip Gokstorp (Saintis-Dreadmist), 2020
 """
 
-from readers import read_from_raw as raw
-from backend import encounter_picker, get_player_name, get_time_stamp
+from src.readers import read_from_raw as raw
+from src.backend import encounter_picker, get_player_name, get_time_stamp
 
 
 def get_flash_heal_casts(character_name, log_lines):

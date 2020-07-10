@@ -80,14 +80,7 @@ Unknown name for spell 15701, https://classic.wowhead.com/spell=15701
     )
 
 
-def test_overheal_crit(script_runner):
-    ret = script_runner.run(python, "overheal_crit.py", log_file, character)
-    assert ret.success
-    assert ret.stderr == ""
-
-    assert (
-        ret.stdout
-        == """\
+overheal_crit_output = """\
 
 Crits:
   Flash Heal (Rank 1)           :   3 /  18 crits (16.7%); (17.5% OH), Crit H:  268 ( 111 +  157 oh)  (58.7% oh), 1% crit gives +1.1 healing eq to  +2.4 h ( +2.6 at 0% crit).
@@ -100,6 +93,33 @@ Crits:
   Overall / Average             :   8 /  52 crits (15.4%); (22.5% OH), Crit H:  465 ( 199 +  265 oh)  (57.1% oh), 1% crit gives +2.0 healing eq to  +3.1 h ( +3.4 at 0% crit).
 
 """
+
+
+def test_overheal_crit(script_runner):
+    ret = script_runner.run(python, "overheal_crit.py", log_file, character, "-e", "1")
+    assert ret.success
+    assert ret.stderr == ""
+
+    assert ret.stdout == overheal_crit_output
+
+
+def test_overheal_crit_input(script_runner):
+    import io
+
+    ret = script_runner.run(python, "overheal_crit.py", log_file, character, stdin=io.StringIO("1"))
+    assert ret.success
+    assert ret.stderr == ""
+
+    assert (
+        ret.stdout
+        == """\
+Found the following encounters:
+
+   0)  Whole log
+   1)  Onyxia
+
+Encounter to analyse: """
+        + overheal_crit_output
     )
 
 

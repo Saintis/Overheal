@@ -8,8 +8,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from readers import read_heals
-from backend import group_processed_lines
+from src.readers import read_heals
+from src import group_processed_lines
 
 import spell_data as sd
 
@@ -222,7 +222,7 @@ def overheal_plot(source, character_name, ignore_crit=False, spell_id=None, spel
 
 def main(argv=None):
     import argparse
-    from backend.parser import OverhealParser
+    from src.parser import OverhealParser
 
     parser = OverhealParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,

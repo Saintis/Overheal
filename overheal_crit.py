@@ -3,8 +3,7 @@ Script that estimates value of 1% crit.
 
 By: Filip Gokstorp (Saintis), 2020
 """
-import readers
-from backend import group_processed_lines
+from src import readers, group_processed_lines
 
 import spell_data as sd
 
@@ -126,10 +125,10 @@ def print_results(data):
     print()
 
 
-def overheal_crit(source, character_name, spell_id=None, **kwargs):
+def overheal_crit(source, character_name, spell_id=None, encounter=None):
     processor = readers.get_processor(source, character_name=character_name)
 
-    encounter = processor.select_encounter()
+    encounter = processor.select_encounter(encounter=encounter)
 
     processor.process(encounter=encounter)
     heal_lines = processor.heals
@@ -160,7 +159,7 @@ def overheal_crit(source, character_name, spell_id=None, **kwargs):
 
 def main(argv=None):
     import os
-    from backend.parser import OverhealParser
+    from src.parser import OverhealParser
 
     # make sure directories exist
     os.makedirs("figs/crit", exist_ok=True)
@@ -174,11 +173,12 @@ for each spell, and for the average spell profile over the whole combat log.
 """,
         need_character=True,
         accept_spell_id=True,
+        accept_encounter=True,
     )
 
     args = parser.parse_args(argv)
 
-    overheal_crit(args.source, args.character_name, args.spell_id)
+    overheal_crit(args.source, args.character_name, spell_id=args.spell_id, encounter=args.encounter)
 
 
 if __name__ == "__main__":

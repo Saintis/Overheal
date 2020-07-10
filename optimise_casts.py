@@ -6,17 +6,17 @@ By: Filip Gokstorp (Saintis-Dreadmist), 2020
 import numpy as np
 import matplotlib.pyplot as plt
 
-from backend import encounter_picker, shorten_spell_name
-from readers import read_from_raw as raw
-from damage.damage_taken import raid_damage_taken
-import spell_data as sd
+from src.utils import shorten_spell_name
+from src.readers import read_from_raw as raw
+from src.damage.damage_taken import raid_damage_taken
+from src.simulation import CharacterData, evaluate_casting_strategy
+from src.simulation.casting_strategy import CastingStrategy, SingleSpellStrategy
 
-from simulation import CharacterData, evaluate_casting_strategy
-from simulation.casting_strategy import CastingStrategy, SingleSpellStrategy
+import spell_data as sd
 
 
 def main(argv=None):
-    from backend.parser import OverhealParser
+    from src.parser import OverhealParser
 
     parser = OverhealParser(need_character=True, accept_encounter=True, accept_spell_id=True, accept_spell_power=True)
     parser.add_argument("-v", "--verbose")
@@ -37,8 +37,9 @@ def main(argv=None):
 
     lines = raw.get_lines(source)
 
-    encounter, encounter_lines, encounter_start, encounter_end = encounter_picker(lines, encounter)
-    data = raw.get_processed_lines(encounter_lines, ref_time=encounter_start)
+    # todo: fix
+    # encounter, encounter_lines, encounter_start, encounter_end = encounter_picker(lines, encounter)
+    data = raw.get_processed_lines(lines)
     events = data.all_events
 
     # encounter_time = (encounter_end - encounter_start).total_seconds()
@@ -49,7 +50,8 @@ def main(argv=None):
 
     times, _, deficits, name_dict, _ = raid_damage_taken(events, character_name=args.character_name)
 
-    encounter_time = (encounter_end - encounter_start).total_seconds()
+    # encounter_time = (encounter_end - encounter_start).total_seconds()
+    encounter = 120.0
     # optimise_casts(args.character_name, times["all"], deficits, name_dict, character_data, encounter_time, spell_id=args.spell_id, verbose=args.verbose)
 
     talents = None
@@ -62,14 +64,11 @@ def main(argv=None):
         "9473": "Flash Heal (Rank 3)",
         "9472": "Flash Heal (Rank 2)",
         "2061": "Flash Heal (Rank 1)",
-
         "2053": "Lesser Heal (Rank 3)",
-
         "10965": "Greater Heal (Rank 4)",
         "10964": "Greater Heal (Rank 3)",
         "10963": "Greater Heal (Rank 2)",
         "2060": "Greater Heal (Rank 1)",
-
         "6064": "Heal (Rank 4)",
         "6063": "Heal (Rank 3)",
         "2055": "Heal (Rank 2)",

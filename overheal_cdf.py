@@ -7,9 +7,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from readers import read_heals
-from backend import group_processed_lines
-from backend.parser import OverhealParser
+from src.readers import read_heals
+from src import group_processed_lines
 
 import spell_data as sd
 
@@ -106,6 +105,8 @@ def overheal_cdf(source, character_name, spell_id=None, path=None, **kwargs):
 
 
 def main():
+    from src.parser import OverhealParser
+
     parser = OverhealParser(
         description="Analyses logs and gives overheal cdf.",
         need_character=True,

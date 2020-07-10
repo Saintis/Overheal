@@ -11,7 +11,7 @@ from datetime import datetime
 from .event_types import HealEvent, DamageTakenEvent
 from .processor import AbstractProcessor, Encounter
 
-from ..backend import ProgressBar
+from ..utils import ProgressBar
 
 
 # First try environment key

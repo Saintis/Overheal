@@ -5,9 +5,8 @@ By: Filip Gokstorp (Saintis), 2020
 """
 import numpy as np
 
-from readers import read_heals
-from backend.parser import OverhealParser
-from backend import group_processed_lines
+from src.readers import read_heals
+from src import group_processed_lines
 import spell_data as sd
 
 
@@ -120,6 +119,7 @@ def process_log(source, character_name=None, ignore_crit=False, **kwargs):
 
 def main(argv=None):
     import argparse
+    from src.parser import OverhealParser
 
     parser = OverhealParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -142,7 +142,7 @@ def main(argv=None):
 
     # print(vars(args))
 
-    process_log(**vars(args))
+    process_log(args.source, args.character_name, args.ignore_crit)
 
 
 if __name__ == "__main__":

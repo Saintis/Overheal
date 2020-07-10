@@ -10,7 +10,7 @@ from datetime import datetime
 from .event_types import HealEvent, DamageTakenEvent
 from .processor import AbstractProcessor, Encounter
 
-from ..backend import get_player_name, get_time_stamp
+from ..utils import get_player_name, get_time_stamp
 
 ENCOUNTER_START = "ENCOUNTER_START"
 ENCOUNTER_END = "ENCOUNTER_END"

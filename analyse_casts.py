@@ -7,9 +7,8 @@ from datetime import timedelta
 import matplotlib.pyplot as plt
 import json
 
-from readers import read_from_raw as raw
-from backend.parser import OverhealParser
-from backend import get_player_name, get_time_stamp, encounter_picker, shorten_spell_name, anonymize_name
+from src.readers import read_from_raw as raw
+from src.utils import get_player_name, get_time_stamp, shorten_spell_name, anonymize_name
 import spell_data as sd
 
 
@@ -407,6 +406,8 @@ def analyse_activity(casts_dict, encounter, encounter_start, encounter_end):
 
 def analyse_casts(source, encounter=None, all=False, **kwargs):
     log = raw.get_lines(source)
+
+    # todo: fix
     encounter, encounter_lines, encounter_start, encounter_end = encounter_picker(log, encounter)
 
     casts, _ = get_casts(encounter_lines)
@@ -432,6 +433,8 @@ def analyse_casts(source, encounter=None, all=False, **kwargs):
 
 
 def main(argv=None):
+    from src.parser import OverhealParser
+
     parser = OverhealParser(
         description="Analyses a boss encounter, or whole combat log, and characterise the amount of heal sniping going "
         "on. Only accepts WoWCombatLog.txt currently.",

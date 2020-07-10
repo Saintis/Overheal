@@ -15,27 +15,23 @@ def read_heals(source, **kwargs):
     Read data from specified source
     """
 
-    if "https://" in source or "http://" in source:
-        code = source.split("#")[0].split("/")[-1]
-
-        import readers.read_from_api as api
-
-        heals, periodics, absorbs = api.get_heals(code, **kwargs)
-    elif ".txt" in source:
-
-        import readers.read_from_raw as raw
+    if ".txt" in source:
+        from . import read_from_raw as raw
 
         heals, periodics = raw.get_heals(source, **kwargs)
         absorbs = []
+
+        return heals, periodics, absorbs
+
+    if "https://" in source or "http://" in source:
+        code = source.split("#")[0].split("/")[-1]
     else:
         # Try assuming source is just the code
         code = source
 
-        import readers.read_from_api as api
+    from . import read_from_api as api
 
-        heals, periodics, absorbs = api.get_heals(code, **kwargs)
-
-    return heals, periodics, absorbs
+    return api.get_heals(code, **kwargs)
 
 
 def get_processor(source, **kwargs):

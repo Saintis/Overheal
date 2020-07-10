@@ -84,8 +84,14 @@ class AbstractProcessor(ABC):
     def select_encounter(self, encounter=None):
         encounters = self.encounters
 
-        if encounter:
-            return encounters[encounter]
+        if encounter is not None:
+            if encounter == 0:
+                return None
+
+            if encounter > len(encounters):
+                raise ValueError(f"Asked to pick encounter {encounter}, but only found {len(encounters)} encounters.")
+
+            return encounters[encounter - 1]
 
         print("Found the following encounters:")
         print("")

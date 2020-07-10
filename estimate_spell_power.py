@@ -5,8 +5,8 @@ By: Filip Gokstorp (Saintis), 2020
 """
 import numpy as np
 
-from readers import read_heals
-from backend import group_processed_lines
+from src.readers import read_heals
+from src import group_processed_lines
 
 import spell_data as sd
 
@@ -130,7 +130,7 @@ def estimate_spell_power(source, character_name, spell_id=None, spiritual_healin
 
 
 if __name__ == "__main__":
-    from backend.parser import OverhealParser
+    from src.parser import OverhealParser
 
     parser = OverhealParser(
         description="Analyses logs and and estimates spell power and crit chance.",

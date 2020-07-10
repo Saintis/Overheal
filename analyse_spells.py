@@ -3,13 +3,10 @@ Analyse spells for an encounter
 
 By: Filip Gokstorp (Saintis-Dreadmist), 2020
 """
-import numpy as np
-import matplotlib.pyplot as plt
 import json
 
-from readers import read_from_raw as raw
-from backend.parser import OverhealParser
-from backend import encounter_picker, get_player_name, get_time_stamp
+from src.readers import read_from_raw as raw
+from src import get_player_name, get_time_stamp
 
 import spell_data as sd
 
@@ -208,6 +205,7 @@ def analyse_spell(
         spell_power = 0
 
     log = raw.get_lines(source)
+    # todo: fix
     encounter, encounter_lines, encounter_start, encounter_end = encounter_picker(log, encounter)
 
     print()
@@ -380,6 +378,8 @@ def analyse_spell(
 
 
 def main(argv=None):
+    from src.parser import OverhealParser
+
     parser = OverhealParser(
         description="Analyses an encounter and prints information about the spells used.",
         need_character=True,

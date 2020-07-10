@@ -7,8 +7,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from readers import read_heals
-from backend import group_processed_lines
+from src.readers import read_heals
+from src import group_processed_lines
 import spell_data as sd
 
 
@@ -128,7 +128,7 @@ def overheal_summary(source, character_name, spell_power, path=None, show=False)
 
 
 def main(argv=None):
-    from backend.parser import OverhealParser
+    from src.parser import OverhealParser
 
     parser = OverhealParser(
         description="Analyses logs and gives summary plot.", need_character=True, accept_spell_power=True

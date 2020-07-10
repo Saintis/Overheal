@@ -7,8 +7,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from readers import read_heals
-from backend import group_processed_lines
+from src.readers import read_heals
+from src import group_processed_lines
 
 import spell_data as sd
 
@@ -158,7 +158,7 @@ def overheal_probability(
 
 
 def main(argv=None):
-    from backend.parser import OverhealParser
+    from src.parser import OverhealParser
 
     parser = OverhealParser(
         description="""Plots probability of overheals for different spells.""",
