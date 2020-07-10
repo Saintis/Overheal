@@ -46,7 +46,7 @@ def get_processor(source, **kwargs):
         # Dealing with a raw combatlog text file
         from .read_from_raw import RawProcessor
 
-        return RawProcessor(source **kwargs)
+        return RawProcessor(source, **kwargs)
 
     # Assuming source is a url pointing towards a WCL report, or the report code itself
     if "https://" in source or "http://" in source:
