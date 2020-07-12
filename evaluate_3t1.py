@@ -8,7 +8,8 @@ By: Filip Gokstorp (Saintis-Dreadmist), 2020
 """
 
 from src.readers import read_from_raw as raw
-from src.backend import encounter_picker, get_player_name, get_time_stamp
+from src.utils import get_player_name, get_time_stamp
+from src.readers import get_processor
 
 
 def get_flash_heal_casts(character_name, log_lines):
@@ -71,17 +72,17 @@ def evaluate_3t1(source, character_name, encounter_i=None):
         print("Evaluate 3T1 only works with a combatlog txt file, it does not work with a WCL link yet.")
         return
 
-    lines = raw.get_lines(source)
-    encounter, encounter_lines, e_start, e_end = encounter_picker(lines, encounter_i=encounter_i)
-    e_time = (e_end - e_start).total_seconds()
-    fh_casts, t1_3_potentials = get_flash_heal_casts(character_name, encounter_lines)
+    processor = get_processor(source, character_name=character_name)
+    encounter = processor.select_encounter(encounter_i)
 
-    if encounter is None:
-        encounter = "All encounters"
+    lines = raw.get_lines(source)
+    e_time = encounter.duration
+    encounter_lines = lines[encounter.start:encounter.end]
+    fh_casts, t1_3_potentials = get_flash_heal_casts(character_name, encounter_lines)
 
     fh_ratio = 0 if fh_casts == 0 else t1_3_potentials / fh_casts
 
-    print(f"Evaluation of 3T1  ({encounter}, {e_time:.0f}s)")
+    print(f"Evaluation of 3T1  ({encounter.boss}, {e_time:.0f}s)")
     print(f"  Used Flash Heal {fh_casts} times.")
     print(f"  Found {t1_3_potentials} back-to-back casts after a Flash Heal (within 0.1s) ({fh_ratio:.1%}).")
     print(
@@ -91,7 +92,7 @@ def evaluate_3t1(source, character_name, encounter_i=None):
 
 
 def main(argv=None):
-    from backend.parser import OverhealParser
+    from src.parser import OverhealParser
 
     parser = OverhealParser(
         description="Evaluate 3 piece T1 set. Counts number of times flash heal casts were back-to-back with less than"
