@@ -7,8 +7,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from readers import get_processor
-from damage.damage_taken import raid_damage_taken, character_damage_taken
+from src.readers import get_processor
+from src.damage.damage_taken import raid_damage_taken, character_damage_taken
 
 
 def health_bar_chart(ax, times, deficits, health_start=0):
@@ -214,7 +214,7 @@ def track_damage_taken(source, character_name=None, encounter=None, raid=False, 
 
 
 def main(argv=None):
-    from backend.parser import OverhealParser
+    from src.parser import OverhealParser
 
     parser = OverhealParser(accept_character=True, accept_encounter=True)
     parser.add_argument("--raid", action="store_true")

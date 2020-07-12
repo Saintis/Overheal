@@ -304,6 +304,13 @@ class APIProcessor(AbstractProcessor):
 
             encounters.append(Encounter(f["name"], start, end, start_t, end_t))
 
+        # make "all" encounter
+        start = encounters[0].start
+        start_t = encounters[0].start_t
+        end = encounters[-1].end
+        end_t = encounters[-1].end_t
+        self.all_encounters = Encounter("Whole encounter", start, end, start_t, end_t)
+
         return encounters
 
     def process(self, start=None, end=None, encounter=None):

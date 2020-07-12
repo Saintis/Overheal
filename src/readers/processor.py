@@ -57,6 +57,7 @@ class AbstractProcessor(ABC):
         self.resurrections = []
         self.deaths = []
 
+        self.all_encounter = None
         self._encounters = None
 
     @property
@@ -86,7 +87,7 @@ class AbstractProcessor(ABC):
 
         if encounter is not None:
             if encounter == 0:
-                return None
+                return self.all_encounter
 
             if encounter > len(encounters):
                 raise ValueError(f"Asked to pick encounter {encounter}, but only found {len(encounters)} encounters.")

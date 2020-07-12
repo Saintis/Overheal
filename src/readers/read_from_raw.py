@@ -240,6 +240,13 @@ class RawProcessor(AbstractProcessor):
 
                 encounters.append(Encounter(encounter_boss, start, i, start_t, end_t))
 
+        # make "all" encounter
+        start = encounters[0].start
+        start_t = encounters[0].start_t
+        end = encounters[-1].end
+        end_t = encounters[-1].end_t
+        self.all_encounters = Encounter("Whole encounter", start, end, start_t, end_t)
+
         return encounters
 
 
