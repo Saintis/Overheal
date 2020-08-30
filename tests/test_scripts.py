@@ -13,39 +13,41 @@ character = "Saintis"
 
 
 def test_overheal_table(script_runner):
-    ret = script_runner.run(python, "overheal_table.py", log_file, character)
+    ret = script_runner.run(python, "overheal_table.py", log_file, character, "-e", "0")
     assert ret.success
     assert ret.stderr == ""
 
     assert (
         ret.stdout
         == """\
-   id  Spell name                     #H    No OH   Any OH  Half OH  Full OH    % OHd
-10917  Flash Heal (Rank 7)            15    60.0%    40.0%    26.7%    13.3%    25.1%
- 2055  Heal (Rank 2)                   5     0.0%   100.0%    20.0%    20.0%    38.8%
- 2061  Flash Heal (Rank 1)            18    61.1%    38.9%    11.1%    11.1%    17.5%
- 9474  Flash Heal (Rank 4)             5    80.0%    20.0%     0.0%     0.0%     0.1%
- 6063  Heal (Rank 3)                   8    62.5%    37.5%    25.0%    12.5%    21.8%
- 2053  Lesser Heal (Rank 3)            1   100.0%     0.0%     0.0%     0.0%     0.0%
--------------------------------------------------------------------------------------
-       Total Spell                    52    57.7%    42.3%    17.3%    11.5%    22.5%
 
-   id  Periodic name                  #H    No OH   Any OH  Half OH  Full OH    % OHd
-10929  Renew (Rank 9)                  5    80.0%    20.0%    20.0%    20.0%    20.0%
--------------------------------------------------------------------------------------
-       Total Periodic                  5    80.0%    20.0%    20.0%    20.0%    20.0%
+     id  Spell name                     #H    No OH   Any OH  Half OH  Full OH    % OHd
+  10917  Flash Heal (Rank 7)            15    60.0%    40.0%    26.7%    13.3%    25.1%
+   2055  Heal (Rank 2)                   5     0.0%   100.0%    20.0%    20.0%    38.8%
+   2061  Flash Heal (Rank 1)            18    61.1%    38.9%    11.1%    11.1%    17.5%
+   9474  Flash Heal (Rank 4)             5    80.0%    20.0%     0.0%     0.0%     0.1%
+   6063  Heal (Rank 3)                   8    62.5%    37.5%    25.0%    12.5%    21.8%
+   2053  Lesser Heal (Rank 3)            1   100.0%     0.0%     0.0%     0.0%     0.0%
+  10929  Renew (Rank 9)                  5    80.0%    20.0%    20.0%    20.0%    20.0%
+  -------------------------------------------------------------------------------------
+         Total Spell                    57    59.6%    40.4%    17.5%    12.3%    22.4%
+
 """
     )
 
 
 def test_overheal_table_api(script_runner):
-    ret = script_runner.run(python, "overheal_table.py", wcl_report, character)
+    ret = script_runner.run(python, "overheal_table.py", wcl_report, character, "-e", "0")
     assert ret.success
     assert ret.stderr == ""
 
     assert (
         ret.stdout
         == """\
+Fetching fight data for report xtj2mVgQXFp4n9RT...
+Fetching fight data for report xtj2mVgQXFp4n9RT... Done.
+Extracting player names...
+Extracting player names... Done.
 Fetching healing events from WCL...
 [>                                                                     ]    0%         0 /  3500005
 [======>                                                               ]    9%    309870 /  3500005
@@ -55,27 +57,24 @@ Fetching healing events from WCL...
 [========================================================>             ]   81%   2828287 /  3500005
 [===================================================================>  ]   97%   3394592 /  3500005
 [======================================================================]  100%   3500005 /  3500005
-Unknown coefficient for spell 15701, https://classic.wowhead.com/spell=15701
-   id  Spell name                     #H    No OH   Any OH  Half OH  Full OH    % OHd
- 6063  Heal (Rank 3)                  70    40.0%    60.0%    25.7%    10.0%    33.0%
-10917  Flash Heal (Rank 7)            16    87.5%    12.5%     6.2%     6.2%     7.0%
-10963  Greater Heal (Rank 2)          58    31.0%    69.0%    41.4%    10.3%    38.0%
- 2061  Flash Heal (Rank 1)            45    62.2%    37.8%    28.9%     6.7%    25.3%
- 2053  Lesser Heal (Rank 3)            1   100.0%     0.0%     0.0%     0.0%     0.0%
-10965  Greater Heal (Rank 4)          13    30.8%    69.2%    38.5%    15.4%    46.8%
- 9474  Flash Heal (Rank 4)             2   100.0%     0.0%     0.0%     0.0%     0.0%
-Unknown name for spell 15701, https://classic.wowhead.com/spell=15701
-15701  [Spell 15701]                   1     0.0%   100.0%   100.0%   100.0%   100.0%
-27805  Holy Nova (Rank 6)              2    50.0%    50.0%     0.0%     0.0%     1.0%
-  596  Prayer of Healing (Rank 1)      6    50.0%    50.0%    33.3%    16.7%    35.0%
-10961  Prayer of Healing (Rank 4)      6    50.0%    50.0%    50.0%    33.3%    45.6%
--------------------------------------------------------------------------------------
-       Total Spell                   220    46.4%    53.6%    30.5%    10.5%    34.2%
 
-   id  Periodic name                  #H    No OH   Any OH  Half OH  Full OH    % OHd
-10929  Renew (Rank 9)                 28    53.6%    46.4%    35.7%    32.1%    39.2%
--------------------------------------------------------------------------------------
-       Total Periodic                 28    53.6%    46.4%    35.7%    32.1%    39.2%
+     id  Spell name                     #H    No OH   Any OH  Half OH  Full OH    % OHd
+   6063  Heal (Rank 3)                  70    40.0%    60.0%    25.7%    10.0%    33.0%
+  10917  Flash Heal (Rank 7)            16    87.5%    12.5%     6.2%     6.2%     7.0%
+  10963  Greater Heal (Rank 2)          58    31.0%    69.0%    41.4%    10.3%    38.0%
+   2061  Flash Heal (Rank 1)            45    62.2%    37.8%    28.9%     6.7%    25.3%
+   2053  Lesser Heal (Rank 3)            1   100.0%     0.0%     0.0%     0.0%     0.0%
+  10965  Greater Heal (Rank 4)          13    30.8%    69.2%    38.5%    15.4%    46.8%
+   9474  Flash Heal (Rank 4)             2   100.0%     0.0%     0.0%     0.0%     0.0%
+  10901  Power Word: Shield (Rank 10)   24   100.0%     0.0%     0.0%     0.0%     0.0%
+  15701  Night Dragon's Breath           1     0.0%   100.0%   100.0%   100.0%   100.0%
+  10929  Renew (Rank 9)                 28    53.6%    46.4%    35.7%    32.1%    39.2%
+  27805  Holy Nova (Rank 6)              2    50.0%    50.0%     0.0%     0.0%     1.0%
+    596  Prayer of Healing (Rank 1)      6    50.0%    50.0%    33.3%    16.7%    35.0%
+  10961  Prayer of Healing (Rank 4)      6    50.0%    50.0%    50.0%    33.3%    45.6%
+  -------------------------------------------------------------------------------------
+         Total Spell                   272    51.8%    48.2%    28.3%    11.8%    33.7%
+
 """
     )
 
@@ -175,7 +174,7 @@ def test_overheal_probability(script_runner, tmpdir):
 
 def test_overheal_summary(script_runner, tmpdir):
     path = tmpdir.strpath
-    ret = script_runner.run(python, "overheal_summary.py", log_file, character, "--path", path)
+    ret = script_runner.run(python, "overheal_summary.py", log_file, character, "--path", path, "-e", "0")
 
     assert ret.success
     assert ret.stderr == ""
@@ -190,12 +189,20 @@ def test_overheal_summary(script_runner, tmpdir):
 
 def test_overheal_plot(script_runner, tmpdir):
     path = tmpdir.strpath
-    ret = script_runner.run(python, "overheal_plot.py", log_file, character, "--path", path)
+    ret = script_runner.run(python, "overheal_plot.py", log_file, character, "--path", path, "-e", "0")
 
     assert ret.success
     assert ret.stderr == ""
 
-    assert ret.stdout == ""
+    assert ret.stdout == """\
+Saving fig for Saintis, 10917, None
+Saving fig for Saintis, 2055, None
+Saving fig for Saintis, 2061, None
+Saving fig for Saintis, 9474, None
+Saving fig for Saintis, 6063, None
+Saving fig for Saintis, 2053, None
+Saving fig for Saintis, 10929, None
+"""
     _, _, filenames = next(os.walk(tmpdir))
 
     expected_ids = (10917, 2055, 2061, 9474, 6063, 2053, 10929)

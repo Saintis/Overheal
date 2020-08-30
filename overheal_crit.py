@@ -131,7 +131,7 @@ def overheal_crit(source, character_name, spell_id=None, encounter=None):
     encounter = processor.select_encounter(encounter=encounter)
 
     processor.process(encounter=encounter)
-    heal_lines = processor.heals
+    heal_lines = processor.direct_heals  # only care about direct heals (periodics cannot crit)
 
     # Group lines
     heal_lines = group_processed_lines(heal_lines, False, spell_id=spell_id)

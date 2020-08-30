@@ -140,6 +140,9 @@ SPELL_NAMES = {
     "23859": "Dispel Magic",  # ZG bosses
     "17201": "Dispel Magic",  # ZG mobs
     "19492": "Antimagic Pulse",  # Garr
+
+    # Generic
+    "15701": "Night Dragon's Breath",
 }
 
 # Spells that might turn up but we don't care for listing in spell casts
@@ -236,6 +239,9 @@ SPELL_COEFFICIENTS = {
 
     # Dispel Magic
     "988": 0.0,
+
+    # Generic
+    "15701": 0.0,
 }
 
 # Raw healing of each spell
@@ -291,6 +297,9 @@ SPELL_HEALS = {
 
     # Desperate Prayer
     "19243": 1459.5,
+
+    # Generic
+    "15701": 425.0,
 }
 
 # Mana cost of each spell
@@ -366,6 +375,9 @@ SPELL_MANA = {
     "988": 223.0,
 
     # "552": "Abolish Disease",
+
+    # Generic
+    "15701": 0.0,
 
 }
 

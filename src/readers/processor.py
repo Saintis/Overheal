@@ -54,8 +54,9 @@ class AbstractProcessor(ABC):
         self.source = source
         self.character_name = character_name
 
-        self.all_events = []
-        self.heals = []
+        self.all_events = []  # heals + damage
+        self.heals = []  # direct heals + periodic heals
+        self.direct_heals = []
         self.periodic_heals = []
         self.damage = []
 

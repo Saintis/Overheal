@@ -323,20 +323,25 @@ class APIProcessor(AbstractProcessor):
 
         return encounters
 
-    def process(self, start=None, end=None, encounter=None):
+    def process(self, start=None, end=None, encounter=None, damage_taken=False):
         if isinstance(encounter, Encounter):
             start = encounter.start if start is None else start
             end = encounter.end if end is None else end
 
-        damage = self.get_damage(start, end)
-        heals, periodics, absorbs = self.get_heals(start, end)
+        direct_heals, periodics, absorbs = self.get_heals(start, end)
 
-        heals = sorted(heals + periodics + absorbs, key=lambda e: e[0])
-        all_events = sorted(damage + heals + periodics + absorbs, key=lambda e: e[0])
+        heals = sorted(direct_heals + periodics + absorbs, key=lambda e: e[0])
 
-        self.damage = damage
         self.heals = heals
-        self.all_events = all_events
+        self.periodic_heals = periodics
+        self.direct_heals = direct_heals
+
+        if damage_taken:
+            damage = self.get_damage(start, end)
+            all_events = sorted(damage + heals, key=lambda e: e[0])
+
+            self.all_events = all_events
+            self.damage = damage
 
     def get_deaths(self):
         pass

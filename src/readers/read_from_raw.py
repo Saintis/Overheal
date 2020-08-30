@@ -139,10 +139,11 @@ class RawProcessor(AbstractProcessor):
         )
 
         self.all_events.append(event)
+        self.heals.append(event)
         if periodic:
             self.periodic_heals.append(event)
         else:
-            self.heals.append(event)
+            self.direct_heals.append(event)
 
     def process_damage(self, line):
         line_parts = line.split(",")
@@ -434,7 +435,7 @@ def get_heals(source, character_name=None, normalise_time=True, **_):
     line_processor = RawProcessor(source, normalise_time=normalise_time, character_name=character_name)
     line_processor.process()
 
-    return line_processor.heals, line_processor.periodic_heals
+    return line_processor.direct_heals, line_processor.periodic_heals
 
 
 def get_heals_and_damage(source, character_name=None, normalise_time=True, **_):
