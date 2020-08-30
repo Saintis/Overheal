@@ -7,7 +7,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src.readers import read_heals
+from src import readers
 from src import group_processed_lines
 import spell_data as sd
 
@@ -48,9 +48,15 @@ def process_spell(spell_id, spell_lines, spell_power=None):
     return n_heal, n_underheal, n_overheal, n_downrank, n_drop_h
 
 
-def overheal_summary(source, character_name, spell_power, path=None, show=False):
+def overheal_summary(source, character_name, spell_power, path=None, show=False, encounter=None):
     # log_lines = raw.get_lines(log_file)
-    heal_lines, periodic_lines, _ = read_heals(source, character_name=character_name)
+    # heal_lines, periodic_lines, _ = read_heals(source, character_name=character_name)
+
+    processor = readers.get_processor(source, character_name=character_name)
+    encounter = processor.select_encounter(encounter=encounter)
+
+    processor.process(encounter=encounter)
+    heal_lines = processor.heals
 
     if path is None:
         path = "figs"
@@ -59,7 +65,7 @@ def overheal_summary(source, character_name, spell_power, path=None, show=False)
 
     # Group lines
     heal_lines = group_processed_lines(heal_lines, False)
-    periodic_lines = group_processed_lines(periodic_lines, False)
+    # periodic_lines = group_processed_lines(periodic_lines, False)
 
     labels = []
 
@@ -83,19 +89,19 @@ def overheal_summary(source, character_name, spell_power, path=None, show=False)
         nn_downrank.append(n_downrank / n_heal)
         nn_drop_h.append(n_drop_h / n_heal)
 
-    for spell_id, lines in periodic_lines.items():
-        labels.append(sd.spell_name(spell_id))
-        data = process_spell(spell_id, lines, spell_power)
-
-        if not data:
-            continue
-
-        n_heal, n_underheal, n_overheal, n_downrank, n_drop_h = data
-
-        nn_underheal.append(n_underheal / n_heal)
-        nn_overheal.append(n_overheal / n_heal)
-        nn_downrank.append(n_downrank / n_heal)
-        nn_drop_h.append(n_drop_h / n_heal)
+    # for spell_id, lines in periodic_lines.items():
+    #     labels.append(sd.spell_name(spell_id))
+    #     data = process_spell(spell_id, lines, spell_power)
+    #
+    #     if not data:
+    #         continue
+    #
+    #     n_heal, n_underheal, n_overheal, n_downrank, n_drop_h = data
+    #
+    #     nn_underheal.append(n_underheal / n_heal)
+    #     nn_overheal.append(n_overheal / n_heal)
+    #     nn_downrank.append(n_downrank / n_heal)
+    #     nn_drop_h.append(n_drop_h / n_heal)
 
     ii = np.argsort(nn_underheal)
 
@@ -115,6 +121,12 @@ def overheal_summary(source, character_name, spell_power, path=None, show=False)
     plt.bar(labels, nn_downrank, color="orange", bottom=b1, label="Partial OH, more than +heal")
     plt.bar(labels, nn_overheal, color="red", bottom=b2, label="Full overheal")
 
+    if encounter:
+        title = f"{character_name}: {encounter.boss}"
+    else:
+        title = character_name
+
+    plt.title(title)
     plt.ylabel("Fraction of casts")
     plt.xticks(rotation=90)
     plt.legend(loc="center left", bbox_to_anchor=(1, 0.5))
@@ -131,14 +143,24 @@ def main(argv=None):
     from src.parser import OverhealParser
 
     parser = OverhealParser(
-        description="Analyses logs and gives summary plot.", need_character=True, accept_spell_power=True
+        description="Analyses logs and gives summary plot.",
+        need_character=True,
+        accept_spell_power=True,
+        accept_encounter=True,
     )
     parser.add_argument("--path")
     parser.add_argument("--show", action="store_true")
 
     args = parser.parse_args(argv)
 
-    overheal_summary(args.source, args.character_name, spell_power=args.spell_power, path=args.path, show=args.show)
+    overheal_summary(
+        args.source,
+        args.character_name,
+        spell_power=args.spell_power,
+        path=args.path,
+        show=args.show,
+        encounter=args.encounter,
+    )
 
 
 if __name__ == "__main__":

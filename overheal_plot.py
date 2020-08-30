@@ -284,6 +284,7 @@ def main(argv=None):
         spell_power=args.spell_power,
         ignore_crit=args.ignore_crit,
         path=args.path,
+        encounter=args.encounter,
     )
 
 

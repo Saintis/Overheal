@@ -5,7 +5,7 @@ By: Filip Gokstorp (Saintis), 2020
 """
 import numpy as np
 
-from src.readers import read_heals
+from src import readers
 from src import group_processed_lines
 import spell_data as sd
 
@@ -16,7 +16,7 @@ def print_spell_aggregate(spell_id, name, data):
     under_heals = heals - any_overheals
 
     print(
-        f"{spell_id:>5s}  {name:28s}  {heals:3.0f}"
+        f"  {spell_id:>5s}  {name:28s}  {heals:3.0f}"
         f"  {under_heals / heals:7.1%}"
         f"  {any_overheals / heals:7.1%}"
         f"  {half_overheals / heals:7.1%}"
@@ -86,14 +86,14 @@ def display_lines(total_data, data_list, group):
         return
 
     print(
-        f"{'id':>5s}  {group + ' name':28s}  {'#H':>3s}  {'No OH':>7s}  {'Any OH':>7s}  {'Half OH':>7s}"
+        f"  {'id':>5s}  {group + ' name':28s}  {'#H':>3s}  {'No OH':>7s}  {'Any OH':>7s}  {'Half OH':>7s}"
         f"  {'Full OH':>7s}  {'% OHd':>7s}"
     )
 
     for spell_id, data in data_list:
         print_spell_aggregate(spell_id, sd.spell_name(spell_id), data)
 
-    print("-" * (5 + 2 + 28 + 2 + 3 + 2 + 7 + 2 + 7 + 2 + 7 + 2 + 7 + 2 + 7))
+    print("  " + "-" * (5 + 2 + 28 + 2 + 3 + 2 + 7 + 2 + 7 + 2 + 7 + 2 + 7 + 2 + 7))
 
     group_name = "Total"
     if group:
@@ -102,19 +102,27 @@ def display_lines(total_data, data_list, group):
     print_spell_aggregate("", group_name, total_data)
 
 
-def process_log(source, character_name=None, ignore_crit=False, **kwargs):
-    heal_lines, periodic_lines, _ = read_heals(source, character_name=character_name, **kwargs)
+def process_log(source, character_name=None, ignore_crit=False, encounter=None, **kwargs):
+    processor = readers.get_processor(source, character_name=character_name)
+    encounter = processor.select_encounter(encounter=encounter)
 
-    # Group lines
+    processor.process(encounter=encounter)
+    heal_lines = processor.heals
     heal_lines = group_processed_lines(heal_lines, ignore_crit)
-    periodic_lines = group_processed_lines(periodic_lines, ignore_crit)
+    # periodic_lines = group_processed_lines(periodic_lines, ignore_crit)
 
     # Aggregate and display data
+    print()
+    if encounter:
+        print(f"  {encounter.boss}:")
+
     total_data, data_list = aggregate_lines(heal_lines, **kwargs)
     display_lines(total_data, data_list, "Spell")
-    print("")
-    total_data, data_list = aggregate_lines(periodic_lines, **kwargs)
-    display_lines(total_data, data_list, "Periodic")
+    # print()
+    # total_data, data_list = aggregate_lines(periodic_lines, **kwargs)
+    # display_lines(total_data, data_list, "Periodic")
+
+    print()
 
 
 def main(argv=None):
@@ -134,6 +142,7 @@ def main(argv=None):
         Full OH: Percentage of heals that overhealed for at least 90% of the heal value.
         % OHd: Percentage of heal values that were overheal, same overheal percentage shown in WarcraftLogs. """,
         need_character=True,
+        accept_encounter=True,
     )
 
     parser.add_argument("--ignore_crit", action="store_true", help="Remove critical heals from analysis")
@@ -142,7 +151,7 @@ def main(argv=None):
 
     # print(vars(args))
 
-    process_log(args.source, args.character_name, args.ignore_crit)
+    process_log(args.source, args.character_name, args.ignore_crit, encounter=args.encounter)
 
 
 if __name__ == "__main__":
