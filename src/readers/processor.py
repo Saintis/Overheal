@@ -29,6 +29,11 @@ class Encounter:
     def __str__(self):
         return self.boss
 
+    @property
+    def name(self):
+        return self.__str__()
+
+    @property
     def short_name(self):
         name_parts = self.boss.split()
 

@@ -133,8 +133,6 @@ def overheal_crit(source, character_name, spell_id=None, encounter=None):
     processor.process(encounter=encounter)
     heal_lines = processor.heals
 
-    # heal_lines, _, _ = read_heals(source, character_name=character_name, **kwargs)
-
     # Group lines
     heal_lines = group_processed_lines(heal_lines, False, spell_id=spell_id)
 

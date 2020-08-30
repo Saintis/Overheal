@@ -5,7 +5,7 @@ By: Filip Gokstorp (Saintis-Dreadmist), 2020
 """
 import os
 import io
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from .event_types import HealEvent, DamageTakenEvent
 from .processor import AbstractProcessor, Encounter
@@ -248,6 +248,186 @@ class RawProcessor(AbstractProcessor):
         self.all_encounters = Encounter("Whole encounter", start, end, start_t, end_t)
 
         return encounters
+
+    def get_casts(self, encounter=None):
+        """Get casts from a raw log"""
+        if encounter is None:
+            start = 0
+            end = -1
+        else:
+            start = encounter.start
+            end = encounter.end
+            self.ref_time = encounter.start_t
+
+        lines = self.log_lines[start:end]
+
+        cast_list = []
+        casts = dict()
+        heals = []
+        casting_dict = dict()
+
+        batch_time = None
+        batch_i = 0
+
+        for i, line in enumerate(lines):
+            line_parts = line.split(",")
+
+            if "Player" not in line_parts[1]:
+                # check for UNIT DIED
+                if "UNIT_DIED" in line_parts[0]:
+                    cancel_time = get_time_stamp(line_parts[0])
+                    target = get_player_name(line_parts[6])
+
+                    if target not in casting_dict:
+                        continue
+
+                    cast = casting_dict.pop(target)
+                    (start_time, spell_id, _) = cast
+
+                    cast = (target, start_time, cancel_time, spell_id, f"[Source died]")
+                    cast_list.append(cast)
+
+                continue
+
+            if "SPELL_CAST_START" in line_parts[0]:
+                source = get_player_name(line_parts[2])
+
+                spell_time = get_time_stamp(line_parts[0])
+                spell_id = line_parts[9]
+
+                if source in casting_dict:
+                    # already casting a spell
+                    cast = casting_dict.pop(source)
+                    (start_time, sid, _) = cast
+
+                    # scan forward to see if cast success got batched
+                    spell_complete = None
+                    j = i
+                    while True:
+                        j += 1
+                        next_line = lines[j]
+                        nlp = next_line.split(",")
+                        n_timestamp = get_time_stamp(nlp[0])
+                        if n_timestamp > spell_time:
+                            break
+
+                        if "SPELL_CAST_SUCCESS" not in nlp[0]:
+                            continue
+
+                        n_source = get_player_name(nlp[2])
+                        if n_source != source:
+                            continue
+
+                        n_sid = nlp[9]
+                        if sid != n_sid:
+                            continue
+
+                        # same source and sid, spell was completed
+                        target = get_player_name(nlp[6])
+                        spell_complete = target
+                        break
+
+                    if spell_complete is not None:
+                        cast = (source, start_time, spell_time, sid, spell_complete)
+                    else:
+                        cast = (source, start_time, spell_time, sid, f"[Cancelled]")
+
+                    cast_list.append(cast)
+
+                casting_dict[source] = (spell_time, spell_id, line)
+
+            elif "SPELL_CAST_SUCCESS" in line_parts[0]:
+                source = get_player_name(line_parts[2])
+                target = get_player_name(line_parts[6])
+                success_time = get_time_stamp(line_parts[0])
+                spell_id = line_parts[9]
+
+                if source in casting_dict:
+                    start_time, start_id, start_line = casting_dict.pop(source)
+
+                    if spell_id != start_id:
+                        if start_time == success_time:
+                            # start and success batched, ignore this success and add start back
+                            casting_dict[source] = (start_time, start_id, start_line)
+                            continue
+
+                        # spell was cancelled with an instant effect
+                        cast = (source, start_time, success_time, start_id, f"[Cancelled]")
+                        cast_list.append(cast)
+
+                else:
+                    # instant cast
+                    start_time = success_time
+
+                if source not in casts:
+                    casts[source] = []
+
+                cast = (source, start_time, success_time, spell_id, target)
+                casts[source].append(cast)
+                cast_list.append(cast)
+
+            elif "SPELL_CAST_FAILED" in line_parts[0]:
+                source = get_player_name(line_parts[2])
+                cancel_time = get_time_stamp(line_parts[0])
+                spell_id = line_parts[9]
+                reason = line_parts[12].strip('"\n')
+
+                if reason not in ("Interrupted", "Your target is dead"):
+                    # spell cast not interrupted, therefore not cancelled.
+                    continue
+
+                if source in casting_dict:
+                    cast = casting_dict.pop(source)
+                    (start_time, _, _) = cast
+                else:
+                    start_time = cancel_time
+
+                cast = (source, start_time, cancel_time, spell_id, f"[{reason}]")
+                cast_list.append(cast)
+
+            elif "SPELL_HEAL" in line_parts[0]:
+                heal_time = get_time_stamp(line_parts[0])
+                source = get_player_name(line_parts[2])
+                target = get_player_name(line_parts[6])
+                spell_id = line_parts[9]
+
+                # align with batch window
+                if not batch_time or heal_time > batch_time:
+                    batch_time = heal_time
+                    batch_i = 0
+
+                heal_amount = int(line_parts[29])  # total heal
+                overheal_amount = int(line_parts[30])  # total heal
+                net_heal = heal_amount - overheal_amount
+                heals.append((source, heal_time, batch_i, spell_id, target, net_heal))
+
+                batch_i += 1
+
+        full_heal_data = []
+
+        # match up casts and heals
+        for source, heal_time, batch_i, spell_id, target, net_heal in heals:
+            if source not in casts:
+                continue
+
+            for c in casts[source]:
+                start_time = c[1]
+                success_time = c[2]
+                c_id = c[3]
+                # c_target = c[4]
+
+                if (
+                    c_id == spell_id
+                    # and c_target == target
+                    and success_time <= heal_time + timedelta(seconds=0.1)
+                ):
+                    # found a match
+                    full_heal = (source, start_time, success_time, heal_time, batch_i, spell_id, target, net_heal)
+                    full_heal_data.append(full_heal)
+
+                    casts[source].remove(c)
+
+        return cast_list, full_heal_data
 
 
 def get_heals(source, character_name=None, normalise_time=True, **_):

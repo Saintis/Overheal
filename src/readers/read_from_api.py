@@ -333,6 +333,8 @@ class APIProcessor(AbstractProcessor):
 
     def get_casts(self, start=None, end=None, encounter=None):
         """Get casts from WCL"""
+        # TODO: FIX
+        return NotImplementedError
 
         "https://classic.warcraftlogs.com:443/v1/report/events/casts/rtQKDVjy83FX296h?start=616959&end=657115"
         if start is None:

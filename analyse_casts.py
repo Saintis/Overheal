@@ -7,10 +7,9 @@ from datetime import timedelta
 import matplotlib.pyplot as plt
 import json
 
-from src.readers import read_from_raw as raw
+from src import readers
 from src.utils import get_player_name, get_time_stamp, shorten_spell_name, anonymize_name
 import spell_data as sd
-
 
 try:
     with open("raid.json") as fp:
@@ -48,179 +47,7 @@ def get_deaths(log_lines):
     return deaths
 
 
-def get_casts(log_lines):
-    """Gets casts in log."""
-
-    cast_list = []
-    casts = dict()
-    heals = []
-    casting_dict = dict()
-
-    batch_time = None
-    batch_i = 0
-
-    for i, line in enumerate(log_lines):
-        line_parts = line.split(",")
-
-        if "Player" not in line_parts[1]:
-            # check for UNIT DIED
-            if "UNIT_DIED" in line_parts[0]:
-                cancel_time = get_time_stamp(line_parts[0])
-                target = get_player_name(line_parts[6])
-
-                if target not in casting_dict:
-                    continue
-
-                cast = casting_dict.pop(target)
-                (start_time, spell_id, _) = cast
-
-                cast = (target, start_time, cancel_time, spell_id, f"[Source died]")
-                cast_list.append(cast)
-
-            continue
-
-        if "SPELL_CAST_START" in line_parts[0]:
-            source = get_player_name(line_parts[2])
-
-            spell_time = get_time_stamp(line_parts[0])
-            spell_id = line_parts[9]
-
-            if source in casting_dict:
-                # already casting a spell
-                cast = casting_dict.pop(source)
-                (start_time, sid, _) = cast
-
-                # scan forward to see if cast success got batched
-                spell_complete = None
-                j = i
-                while True:
-                    j += 1
-                    next_line = log_lines[j]
-                    nlp = next_line.split(",")
-                    n_timestamp = get_time_stamp(nlp[0])
-                    if n_timestamp > spell_time:
-                        break
-
-                    if "SPELL_CAST_SUCCESS" not in nlp[0]:
-                        continue
-
-                    n_source = get_player_name(nlp[2])
-                    if n_source != source:
-                        continue
-
-                    n_sid = nlp[9]
-                    if sid != n_sid:
-                        continue
-
-                    # same source and sid, spell was completed
-                    target = get_player_name(nlp[6])
-                    spell_complete = target
-                    break
-
-                if spell_complete is not None:
-                    cast = (source, start_time, spell_time, sid, spell_complete)
-                else:
-                    cast = (source, start_time, spell_time, sid, f"[Cancelled]")
-
-                cast_list.append(cast)
-
-            casting_dict[source] = (spell_time, spell_id, line)
-
-        elif "SPELL_CAST_SUCCESS" in line_parts[0]:
-            source = get_player_name(line_parts[2])
-            target = get_player_name(line_parts[6])
-            success_time = get_time_stamp(line_parts[0])
-            spell_id = line_parts[9]
-
-            if source in casting_dict:
-                start_time, start_id, start_line = casting_dict.pop(source)
-
-                if spell_id != start_id:
-                    if start_time == success_time:
-                        # start and success batched, ignore this success and add start back
-                        casting_dict[source] = (start_time, start_id, start_line)
-                        continue
-
-                    # spell was cancelled with an instant effect
-                    cast = (source, start_time, success_time, start_id, f"[Cancelled]")
-                    cast_list.append(cast)
-
-            else:
-                # instant cast
-                start_time = success_time
-
-            if source not in casts:
-                casts[source] = []
-
-            cast = (source, start_time, success_time, spell_id, target)
-            casts[source].append(cast)
-            cast_list.append(cast)
-
-        elif "SPELL_CAST_FAILED" in line_parts[0]:
-            source = get_player_name(line_parts[2])
-            cancel_time = get_time_stamp(line_parts[0])
-            spell_id = line_parts[9]
-            reason = line_parts[12].strip('"\n')
-
-            if reason not in ("Interrupted", "Your target is dead"):
-                # spell cast not interrupted, therefore not cancelled.
-                continue
-
-            if source in casting_dict:
-                cast = casting_dict.pop(source)
-                (start_time, _, _) = cast
-            else:
-                start_time = cancel_time
-
-            cast = (source, start_time, cancel_time, spell_id, f"[{reason}]")
-            cast_list.append(cast)
-
-        elif "SPELL_HEAL" in line_parts[0]:
-            heal_time = get_time_stamp(line_parts[0])
-            source = get_player_name(line_parts[2])
-            target = get_player_name(line_parts[6])
-            spell_id = line_parts[9]
-
-            # align with batch window
-            if not batch_time or heal_time > batch_time:
-                batch_time = heal_time
-                batch_i = 0
-
-            heal_amount = int(line_parts[29])  # total heal
-            overheal_amount = int(line_parts[30])  # total heal
-            net_heal = heal_amount - overheal_amount
-            heals.append((source, heal_time, batch_i, spell_id, target, net_heal))
-
-            batch_i += 1
-
-    full_heal_data = []
-
-    # match up casts and heals
-    for source, heal_time, batch_i, spell_id, target, net_heal in heals:
-        if source not in casts:
-            continue
-
-        for c in casts[source]:
-            start_time = c[1]
-            success_time = c[2]
-            c_id = c[3]
-            # c_target = c[4]
-
-            if (
-                c_id == spell_id
-                # and c_target == target
-                and success_time <= heal_time + timedelta(seconds=0.1)
-            ):
-                # found a match
-                full_heal = (source, start_time, success_time, heal_time, batch_i, spell_id, target, net_heal)
-                full_heal_data.append(full_heal)
-
-                casts[source].remove(c)
-
-    return cast_list, full_heal_data
-
-
-def plot_casts(casts_dict, encounter, start=None, end=None, mark=None, anonymize=True, deaths=None):
+def plot_casts(casts_dict, encounter, mark=None, anonymize=True, deaths=None):
     casts = list(casts_dict.values())
     labels = list(casts_dict.keys())
     most_casts = max((len(c) for c in casts))
@@ -232,9 +59,8 @@ def plot_casts(casts_dict, encounter, start=None, end=None, mark=None, anonymize
         labels = [anonymize_name(s) for s in labels]
 
     w = 16
-    if end and start:
-        duration = (end - start).total_seconds()
-        w = duration / 4
+    duration = encounter.duration
+    w = duration / 4
 
     h = 0.6 * len(labels)
     fig = plt.figure(figsize=(w, h), constrained_layout=True)
@@ -263,9 +89,6 @@ def plot_casts(casts_dict, encounter, start=None, end=None, mark=None, anonymize
                 if "[" in spell_name:
                     color = "#b3b3b3" if even else "#cccccc"
 
-                if start is None:
-                    start = c[1]
-
                 target = c[4]
 
                 if target in TANKS:
@@ -292,7 +115,7 @@ def plot_casts(casts_dict, encounter, start=None, end=None, mark=None, anonymize
                 spell_tag += "\n" + target
 
                 w = (c[2] - c[1]).total_seconds()
-                x = (c[1] - start).total_seconds()
+                x = (c[1] - encounter.start_t).total_seconds()
 
                 if w == 0:
                     # if no width, make it GCD length
@@ -309,13 +132,12 @@ def plot_casts(casts_dict, encounter, start=None, end=None, mark=None, anonymize
         for tag, x, y in tags:
             ax.text(x, y, tag, ha="center", va="center")
 
-    if end:
-        x = (end - start).total_seconds()
-        plt.axvline(x, color="k")
+    plt.axvline(duration, color="k")
 
     title = "Casts"
     if encounter:
-        title += f" during {encounter}"
+        title += f" during {encounter.boss}"
+
     plt.title(title)
     plt.xlabel("Fight duration [s]")
     plt.grid(axis="x")
@@ -328,8 +150,8 @@ def plot_casts(casts_dict, encounter, start=None, end=None, mark=None, anonymize
 
     last_ts = 0
     y = -1
-    for timestamp, player in deaths:
-        x = (timestamp - start).total_seconds()
+    for timestamp, unit_id, player in deaths:
+        x = timestamp.total_seconds()
         plt.axvline(x, color="k", alpha=0.5)
 
         if timestamp == last_ts:
@@ -341,26 +163,26 @@ def plot_casts(casts_dict, encounter, start=None, end=None, mark=None, anonymize
         last_ts = timestamp
 
     if encounter:
-        e_name = encounter.short_name()
+        e_name = encounter.short_name
     else:
         e_name = "all"
 
-    fig_path = f"figs/casts_{e_name}.png"
+    fig_path = f"figs/casts_{e_name}.pdf"
     plt.savefig(fig_path)
     plt.close()
     print(f"Saved casts figure to `{fig_path}`")
 
 
-def analyse_activity(casts_dict, encounter, encounter_start, encounter_end):
+def analyse_activity(casts_dict, encounter):
     """Analyses casting activity for each healer."""
 
-    combat_time = (encounter_end - encounter_start).total_seconds()
-    print(f"Activity for {encounter}, {combat_time:.1f}s")
+    combat_time = encounter.duration
+    print(f"Activity for {encounter.name}, {combat_time:.1f}s")
 
     print(f"  {'Healer':<12s}  {'setup'}  {'activ'}  {'act %'}  {'inact'}  {'regen'}")
 
     for healer in HEALERS:
-        end = encounter_start
+        end = encounter.start_t
 
         if healer not in casts_dict:
             continue
@@ -390,8 +212,8 @@ def analyse_activity(casts_dict, encounter, encounter_start, encounter_end):
             else:
                 end = cast_end
 
-        if end < encounter_end:
-            d_time = (encounter_end - end).total_seconds()
+        if end < encounter.end_t:
+            d_time = (encounter.end_t - end).total_seconds()
             inactive_time += d_time
             if d_time > 5.0:
                 regen_time += d_time - 5.0
@@ -405,12 +227,12 @@ def analyse_activity(casts_dict, encounter, encounter_start, encounter_end):
 
 
 def analyse_casts(source, encounter=None, all=False, **kwargs):
-    log = raw.get_lines(source)
+    processor = readers.get_processor(source)
 
-    # todo: fix
-    encounter, encounter_lines, encounter_start, encounter_end = encounter_picker(log, encounter)
+    encounter = processor.select_encounter(encounter=encounter)
+    processor.process(encounter=encounter)
 
-    casts, _ = get_casts(encounter_lines)
+    casts, _ = processor.get_casts(encounter=encounter)
 
     casts_dict = dict()
     for c in casts:
@@ -423,13 +245,13 @@ def analyse_casts(source, encounter=None, all=False, **kwargs):
 
         casts_dict[s].append(c)
 
-    deaths = get_deaths(encounter_lines)
+    deaths = processor.deaths
 
     if encounter:
         # only plot casts for an encounter
-        plot_casts(casts_dict, encounter, start=encounter_start, end=encounter_end, deaths=deaths, **kwargs)
+        plot_casts(casts_dict, encounter, deaths=deaths, **kwargs)
 
-    analyse_activity(casts_dict, encounter, encounter_start, encounter_end)
+    analyse_activity(casts_dict, encounter)
 
 
 def main(argv=None):

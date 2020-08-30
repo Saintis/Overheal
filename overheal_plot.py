@@ -8,13 +8,13 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src.readers import read_heals
+from src import readers
 from src import group_processed_lines
 
 import spell_data as sd
 
 
-def plot_overheal(player, spell_powers, spell_id, data, sp_shift=0, sp_extrap=200, path=None):
+def plot_overheal(player, spell_powers, spell_id, data, sp_shift=0, sp_extrap=200, path=None, encounter=None):
     if path is None:
         path = "figs/overheal"
 
@@ -30,7 +30,12 @@ def plot_overheal(player, spell_powers, spell_id, data, sp_shift=0, sp_extrap=20
     plt.plot(sp, total_overheals, label="Overheal")
     plt.plot(sp, total_underheals, label="Actual heal")
 
-    plt.title(f"Average healing per cast as +heal varies\n{spell_name}")
+    title = f"Average healing per cast as +heal varies\n{spell_name}"
+
+    if encounter:
+        title = encounter.boss + "\n" + title
+
+    plt.title(title)
     plt.xlabel("Heal power")
     plt.ylabel("Healing output")
     plt.ylim([0, None])
@@ -54,8 +59,12 @@ def plot_overheal(player, spell_powers, spell_id, data, sp_shift=0, sp_extrap=20
     ax1.plot(sp, nn_full_overheals, label="Full overheal")
 
     title = "Number of overheals as a +heal varies"
+
     if spell_id:
         title = sd.spell_name(spell_id) + "\n" + title
+
+    if encounter:
+        title = encounter.boss + "\n" + title
 
     ax1.set_title(title)
     ax1.set_xlabel("Heal power")
@@ -85,6 +94,9 @@ def plot_overheal(player, spell_powers, spell_id, data, sp_shift=0, sp_extrap=20
     if spell_id:
         title = sd.spell_name(spell_id) + "\n" + title
 
+    if encounter:
+        title = encounter.boss + "\n" + title
+
     ax2.set_title(title)
     ax2.set_xlabel("Heal power")
     ax2.set_ylabel("d(Healing)/d(Spell power)")
@@ -99,6 +111,8 @@ def plot_overheal(player, spell_powers, spell_id, data, sp_shift=0, sp_extrap=20
 
     plt.savefig(f"{path}/{fig_name}.png")
     plt.close()
+
+    print(f"Saving fig for {player}, {spell_id}, {encounter}")
 
 
 def process_lines_for_spell(lines, dh, base_heal=None):
@@ -195,11 +209,18 @@ def group_lines_for_spell(spell_id, lines, spell_powers):
     return (total_heals, total_overheals, total_underheals, count_heals, nn_underheals, nn_overheals, nn_full_overheals)
 
 
-def overheal_plot(source, character_name, ignore_crit=False, spell_id=None, spell_power=None, path=None, **kwargs):
-    heal_lines, periodic_lines, absorbs = read_heals(source, character_name=character_name, spell_id=spell_id, **kwargs)
+def overheal_plot(
+    source, character_name, ignore_crit=False, spell_id=None, spell_power=None, path=None, encounter=None, **kwargs
+):
+
+    processor = readers.get_processor(source, character_name=character_name)
+    encounter = processor.select_encounter(encounter=encounter)
+
+    processor.process(encounter=encounter)
+    heal_lines = processor.heals
 
     # Group lines
-    heal_lines = group_processed_lines(heal_lines + periodic_lines, ignore_crit, spell_id=spell_id)
+    heal_lines = group_processed_lines(heal_lines, ignore_crit, spell_id=spell_id)
 
     if spell_power is None:
         sp_neg = 400.0
@@ -217,7 +238,16 @@ def overheal_plot(source, character_name, ignore_crit=False, spell_id=None, spel
 
     for spell_id, lines in heal_lines.items():
         out = group_lines_for_spell(spell_id, lines, spell_powers)
-        plot_overheal(character_name, spell_powers, spell_id, out, sp_shift=sp_shift, sp_extrap=sp_extrap, path=path)
+        plot_overheal(
+            character_name,
+            spell_powers,
+            spell_id,
+            out,
+            sp_shift=sp_shift,
+            sp_extrap=sp_extrap,
+            path=path,
+            encounter=encounter,
+        )
 
 
 def main(argv=None):
@@ -239,6 +269,7 @@ def main(argv=None):
         need_character=True,
         accept_spell_id=True,
         accept_spell_power=True,
+        accept_encounter=True,
     )
 
     parser.add_argument("--ignore_crit", action="store_true", help="Remove critical heals from analysis")
