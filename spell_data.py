@@ -149,6 +149,8 @@ SPELL_IGNORE = [
     "23477",  # 1440 Health Stone
     "23394",  # Shadow of Ebonroc
     "18610",  # First Aid (Heavy Runecloth)
+    "17544",  # Greater Frost Protection Potion
+    "17543",  # Greater Fire Protection Potion
     "17531",  # Major Mana Potion
     "17291",  # Stratholme Holy Water
     "16666",  # Demonic Rune

@@ -53,6 +53,11 @@ def _get_api_request(url, **params):
     return data
 
 
+def _get_time(t):
+    """Convert WCL time count into datetime object"""
+    return datetime.fromtimestamp(t / 1000)
+
+
 class APIProcessor(AbstractProcessor):
     """Processes WCL API for data."""
 
@@ -61,6 +66,7 @@ class APIProcessor(AbstractProcessor):
 
         self.code = source
         self._player_names = None
+        self._fight_data = None
 
     @property
     def player_names(self):
@@ -70,11 +76,16 @@ class APIProcessor(AbstractProcessor):
         return self._player_names
 
     def get_fights(self):
-        url = f"{API_ROOT}/report/fights/{self.code}"
-        data = _get_api_request(url)
-        return data
+        if self._fight_data is None:
+            print(f"Fetching fight data for report {self.code}...", end="\r")
+            url = f"{API_ROOT}/report/fights/{self.code}"
+            self._fight_data = _get_api_request(url)
+            print(f"Fetching fight data for report {self.code}... Done.")
+
+        return self._fight_data
 
     def get_player_names(self):
+        print("Extracting player names...", end="\r")
         fight_data = self.get_fights()
 
         friendlies = fight_data["friendlies"]
@@ -86,6 +97,7 @@ class APIProcessor(AbstractProcessor):
             player_names[player_id] = player_name
 
         self._player_names = player_names
+        print("Extracting player names... Done.")
 
     def get_heals(self, start=None, end=None, encounter=None):
         """Gets all heals for the log"""
@@ -128,8 +140,7 @@ class APIProcessor(AbstractProcessor):
 
             for e in events:
                 try:
-                    timestamp = e["timestamp"]
-                    timestamp = datetime.fromtimestamp(timestamp / 1000.0).time()
+                    timestamp = _get_time(e["timestamp"])
                     spell_id = str(e["ability"]["guid"])
 
                     if "sourceID" not in e:
@@ -233,8 +244,7 @@ class APIProcessor(AbstractProcessor):
 
             for e in events:
                 try:
-                    timestamp = e["timestamp"]
-                    timestamp = datetime.fromtimestamp(timestamp / 1000.0).time()
+                    timestamp = _get_time(e["timestamp"])
                     # spell_id = str(e["ability"]["guid"])
 
                     # if "sourceID" not in e:
@@ -299,8 +309,8 @@ class APIProcessor(AbstractProcessor):
 
             start = f["start_time"]
             end = f["end_time"]
-            start_t = datetime.fromtimestamp(start / 1000.0).time()
-            end_t = datetime.fromtimestamp(end / 1000.0).time()
+            start_t = _get_time(start)
+            end_t = _get_time(end)
 
             encounters.append(Encounter(f["name"], start, end, start_t, end_t))
 
@@ -368,8 +378,7 @@ class APIProcessor(AbstractProcessor):
 
             for e in events:
                 try:
-                    timestamp = e["timestamp"]
-                    timestamp = datetime.fromtimestamp(timestamp / 1000.0).time()
+                    timestamp = _get_time(e["timestamp"])
                     # spell_id = str(e["ability"]["guid"])
 
                     e_type = e["type"]

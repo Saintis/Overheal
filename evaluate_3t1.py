@@ -77,7 +77,7 @@ def evaluate_3t1(source, character_name, encounter_i=None):
 
     lines = raw.get_lines(source)
     e_time = encounter.duration
-    encounter_lines = lines[encounter.start:encounter.end]
+    encounter_lines = lines[encounter.start : encounter.end]
     fh_casts, t1_3_potentials = get_flash_heal_casts(character_name, encounter_lines)
 
     fh_ratio = 0 if fh_casts == 0 else t1_3_potentials / fh_casts
